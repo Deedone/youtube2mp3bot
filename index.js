@@ -14,9 +14,7 @@ console.log(PORT,TOKEN);
 let bot = 0
 let app = express()
 app.use(bodyParser.json())
-app.all("/",(req,res)=>{
-  res.end("nothing to see here")
-})
+
 
 if("HEROKU" in process.env){
   bot = new TelegramBot(TOKEN)
@@ -26,18 +24,26 @@ if("HEROKU" in process.env){
   bot.deleteWebHook().then(val => console.log("webhook killed:",val))
 
 }
-bot.getMe().then(val => console.log(val))
-
-app.all("/hook",(req,res)=>{
-  res.end("ok")
-  processMessage(req.body.message)
-}).listen(PORT)
+bot.getMe().then(val => console.log("Info about me:",val))
 
 bot.on("message",mes =>{
   processMessage(mes)
 })
 
 
+app.all("/",(req,res)=>{
+  res.end("nothing to see here")
+})
+.all("/hook",(req,res)=>{
+  res.end("ok")
+  processMessage(req.body.message)
+})
+.listen(PORT)
+
+
+
+
+//Promisifying youtube-dl
 function getInfoAsync(url){
   return new Promise((resolve, reject)=>{
     ytdl.getInfo(url,(err,info) =>{
@@ -64,7 +70,9 @@ async function processMessage(m){
 
   if(('audio' in m || 'document' in m)&& 'caption' in m){
     let data = m.caption.split(" ")
-    bot.sendAudio(data[0],m.audio.file_id)
+    // a && b returns b
+    let id = ('audio' in m && m.audio.file_id) || ('document' in m && m.document.file_id)
+    bot.sendAudio(data[0],id)
     return
   }
 
@@ -76,15 +84,20 @@ async function processMessage(m){
 
   if(matches != null && matches.length == 2){
     let [url,video_id] = matches
-    let mes = await bot.sendMessage(m.chat.id,"Downloading video")
-    await downloadMP3Async(url)
-    let info = await getInfoAsync(url)
     let filename = video_id+".mp3"
+    //This is for parallel execution
+    let [mes,info,_] = await Promise.all([bot.sendMessage(m.chat.id,"Downloading video"),getInfoAsync(url),downloadMP3Async(url)])
 
     console.log("python3",['client.py',filename,m.chat.id,info.title,video_id])
 
+    //Works around telegram's 50mb bot uploads limit
+    //written in python cuz i didn't find good alternative to telethon
+    //uploads file to telegram and sends it back to bot
+    //adss wideo id and chat id to file's caption
     let child = child_process.spawn("python3",['client.py',filename,m.chat.id,info.title,video_id],{stdio:'pipe'})
 
+    //script also prints uploaded/total bytes to stdout so we can
+    //show nice progressbar to user
     child.stdout.on('data',data => {
       let arr = data.toString().split(" ")
       let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
