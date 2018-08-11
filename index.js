@@ -29,54 +29,69 @@ if("HEROKU" in process.env){
 bot.getMe().then(val => console.log(val))
 
 app.all("/hook",(req,res)=>{
-  //console.log(req.body)
-  res.end("da")
+  res.end("ok")
   processMessage(req.body.message)
 }).listen(PORT)
 
 bot.on("message",mes =>{
-  console.log("Polled")
   processMessage(mes)
-  console.log("Polled end")
 })
+
+
+function getInfoAsync(url){
+  return new Promise((resolve, reject)=>{
+    ytdl.getInfo(url,(err,info) =>{
+      if (err) reject(err);
+      resolve(info);
+    })
+  })
+}
+
+function downloadMP3Async(url){
+  return new Promise((resolve,reject)=>{
+    ytdl.exec(url, ['-x', '--audio-format', 'mp3','--audio-quality=0','-o%(id)s.%(ext)s'], {},(err, output) => {
+      if (err) reject(err);
+      resolve(output)
+    })
+  })
+}
 
 
 async function processMessage(m){
 
-  console.log("json = ",m)
+  console.log("data = ",m.text || m.audio || m.document)
 
 
   if(('audio' in m || 'document' in m)&& 'caption' in m){
     let data = m.caption.split(" ")
     bot.sendAudio(data[0],m.audio.file_id)
+    return
   }
 
   if(!('text' in m)){
     return
   }
+
   let matches = m.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&|$|\?)/)
 
-
   if(matches != null && matches.length == 2){
+    let [url,video_id] = matches
     let mes = await bot.sendMessage(m.chat.id,"Downloading video")
-    ytdl.exec(matches[0], ['-x', '--audio-format', 'mp3','--audio-quality=0','-o%(id)s.%(ext)s'], {},async (err, output) => {
-      if (err) throw err;
-    //  console.log(mes)
-      ytdl.getInfo(matches[0],(err, info) => {
-        if (err) throw err;
-        let filename = matches[1]+".mp3"
-        console.log("python3",['client.py',filename,m.chat.id,info.title,matches[1]])
-        let child = child_process.spawn("python3",['client.py',filename,m.chat.id,info.title,matches[1]],{
-          stdio:'pipe'
-        })
+    await downloadMP3Async(url)
+    let info = await getInfoAsync(url)
+    let filename = video_id+".mp3"
 
-        child.stdout.on('data',data => {
-          let arr = data.toString().split(" ")
-          let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
-          bot.editMessageText(`Uploading mp3 - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
-        })
-        child.stderr.on('data',data => console.log("err",data.toString()))
-      })
+    console.log("python3",['client.py',filename,m.chat.id,info.title,video_id])
+
+    let child = child_process.spawn("python3",['client.py',filename,m.chat.id,info.title,video_id],{stdio:'pipe'})
+
+    child.stdout.on('data',data => {
+      let arr = data.toString().split(" ")
+      let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
+      bot.editMessageText(`Uploading mp3 - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
     })
+    child.stderr.on('data',data => console.log("err",data.toString()))
+
+
   }
 }
