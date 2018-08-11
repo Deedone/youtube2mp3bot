@@ -2,6 +2,22 @@ const express = require('express')
 const fs = require('fs')
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
+const ytdl = require('youtube-dl')
+
+
+
+
+
+ytdl.exec("https://youtu.be/PizwcirYuGY", ['-x', '--audio-format', 'mp3','--audio-quality=0'], {}, function(err, output) {
+  if (err) throw err;
+  console.log(output.join('\n'));
+});
+
+
+
+
+
+
 
 const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "590456891:AAEkOXQo2UuYnIw1wnLyKrbKgNyGnJigqbQ"
