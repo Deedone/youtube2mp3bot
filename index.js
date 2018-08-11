@@ -11,9 +11,10 @@ const ytdl = require('youtube-dl')
 ytdl.exec("https://youtu.be/PizwcirYuGY", ['-x', '--audio-format', 'mp3','--audio-quality=0'], {}, function(err, output) {
   if (err) throw err;
   console.log(output.join('\n'));
+  console.log(fs.readdirSync("."))
 });
 
-
+console.log(fs.readdirSync("."))
 
 
 
