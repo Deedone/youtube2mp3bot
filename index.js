@@ -31,7 +31,7 @@ bot.getMe().then(val => console.log(val))
 app.all("/hook",(req,res)=>{
   //console.log(req.body)
   res.end("da")
-  processMessage(req.body)
+  processMessage(req.body.message)
 }).listen(PORT)
 
 bot.on("message",mes =>{
