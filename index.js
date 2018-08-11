@@ -13,6 +13,11 @@ app.all("/hook",(req,res)=>{
   console.log("y boy")
   res.end("da")
 })
+app.all("/",(req,res)=>{
+  res.end("nothing to see here")
+})
+
+
 app.listen(PORT)
 
 
@@ -20,7 +25,7 @@ if("HEROKU" in process.env){
   console.log("on heroku")
 
   bot = new TelegramBot(TOKEN)
-  bot.setWebhook("https://free-audio-bot.herokuapp.com/hook")
+  bot.setWebHook("https://free-audio-bot.herokuapp.com/hook")
 
 }else{
   bot = new TelegramBot(TOKEN,{polling:true})
