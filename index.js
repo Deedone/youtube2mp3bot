@@ -58,7 +58,7 @@ async function processMessage(m){
 
 
   if(matches != null && matches.length == 2){
-    let mes = await bot.sendMessage(m.chat.id,"Downloading vide")
+    let mes = await bot.sendMessage(m.chat.id,"Downloading video")
     ytdl.exec(matches[0], ['-x', '--audio-format', 'mp3','--audio-quality=0','-o%(id)s.%(ext)s'], {},async (err, output) => {
       if (err) throw err;
     //  console.log(mes)
@@ -71,7 +71,7 @@ async function processMessage(m){
         })
 
         child.stdout.on('data',data => {
-          let arr = sdata.toString().split(" ")
+          let arr = data.toString().split(" ")
           let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
           bot.editMessageText(`Uploading mp3 - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
         })
