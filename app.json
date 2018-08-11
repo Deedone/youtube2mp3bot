@@ -1,0 +1,7 @@
+{
+  "name":"free-audio-bot",
+  "description": "Cuz we wanna be free and do what we wanna do",
+  "env":{
+    "TOKEN":"NOTHING"
+  }
+}
