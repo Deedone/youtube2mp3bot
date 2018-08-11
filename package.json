@@ -4,6 +4,7 @@
   "description": "Cuz we wanna be free and do what we wanna do",
   "main": "index.js",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "node-telegram-bot-api": "^0.30.0"
   },

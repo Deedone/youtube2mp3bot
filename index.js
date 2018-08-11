@@ -1,7 +1,7 @@
 const express = require('express')
 const fs = require('fs')
 const TelegramBot = require('node-telegram-bot-api');
-
+const bodyParser = require('body-parser')
 
 const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "590456891:AAEkOXQo2UuYnIw1wnLyKrbKgNyGnJigqbQ"
@@ -9,7 +9,7 @@ const TOKEN = process.env.TOKEN || "590456891:AAEkOXQo2UuYnIw1wnLyKrbKgNyGnJigqb
 console.log(PORT,TOKEN);
 let bot = 0
 let app = express()
-app.use(express.bodyParser())
+app.use(bodyParser.json())
 app.all("/",(req,res)=>{
   res.end("nothing to see here")
 })
