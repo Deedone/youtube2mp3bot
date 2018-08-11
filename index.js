@@ -1,18 +1,14 @@
 const express = require('express')
 const path = require('path')
 const PORT = process.env.PORT || 5000
+const TelegramBot = require('node-telegram-bot-api');
+const TOKEN = process.env.TOKEN || "590456891:a"
 
-
-app = express()
-
-app.set('views', path.join(__dirname, 'views'))
-  .set('view engine', 'ejs');
-
-
-  app.get("/",(req,res)=>{
-    res.end("hello")
-  })
+console.log(PORT,TOKEN);
 
 
 
-app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+const bot = new TelegramBot(TOKEN)
+
+
+bot.getMe().then(val => console.log(val))

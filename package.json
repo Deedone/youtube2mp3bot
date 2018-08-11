@@ -4,7 +4,8 @@
   "description": "Cuz we wanna be free and do what we wanna do",
   "main": "index.js",
   "dependencies": {
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "node-telegram-bot-api": "^0.30.0"
   },
   "devDependencies": {},
   "scripts": {
