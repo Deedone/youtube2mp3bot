@@ -6,7 +6,8 @@
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
-    "node-telegram-bot-api": "^0.30.0"
+    "node-telegram-bot-api": "^0.30.0",
+    "youtube-dl": "^1.12.2"
   },
   "devDependencies": {},
   "scripts": {

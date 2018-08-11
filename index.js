@@ -19,20 +19,35 @@ if("HEROKU" in process.env){
   bot.setWebHook("https://free-audio-bot.herokuapp.com/hook")
 }else{
   bot = new TelegramBot(TOKEN,{polling:true})
+  bot.deleteWebHook().then(val => console.log("webhook killed:",val))
 
 }
 bot.getMe().then(val => console.log(val))
 
 app.all("/hook",(req,res)=>{
-  console.log(req.body)
+  //console.log(req.body)
   res.end("da")
+  processMessage(req.body)
 }).listen(PORT)
 
 bot.on("message",mes =>{
-  console.log(mes)
+  console.log("Polled")
+  processMessage(mes)
+  console.log("Polled end")
 })
 
 
-function processMessage(json){
-  console.log(json)
+async function processMessage(m){
+
+  console.log("json = ",m)
+
+  let matches = m.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&|$|\?)/)
+  if(matches == null || matches.length() < 2){
+    return
+  }
+
+  console.log("matches = ",matches)
+
+
+
 }
