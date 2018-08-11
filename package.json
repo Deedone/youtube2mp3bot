@@ -1,0 +1,13 @@
+{
+  "name": "free-audio-bot",
+  "version": "1.0.0",
+  "description": "Cuz we wanna be free and do what we wanna do",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mynameisthenekit@gmail.com",
+  "license": "MIT"
+}
