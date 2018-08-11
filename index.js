@@ -8,7 +8,7 @@ const child_process = require('child_process');
 
 
 const PORT = process.env.PORT || 5000
-const TOKEN = process.env.TOKEN || "590456891:AAEkOXQo2UuYnIw1wnLyKrbKgNyGnJigqbQ"
+const TOKEN = process.env.TOKEN || 0
 
 console.log(PORT,TOKEN);
 let bot = 0
@@ -46,7 +46,7 @@ async function processMessage(m){
   console.log("json = ",m)
 
 
-  if('audio' in m && 'caption' in m){
+  if(('audio' in m || 'document' in m)&& 'caption' in m){
     let data = m.caption.split(" ")
     bot.sendAudio(data[0],m.audio.file_id)
   }

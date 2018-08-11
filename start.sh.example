@@ -1,0 +1,5 @@
+export TOKEN="BOT TOKEN"
+export TELEGRAM_APPID="00000"
+export TELEGRAM_APIHASH="API HASH"
+
+node index.js
