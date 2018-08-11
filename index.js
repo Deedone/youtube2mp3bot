@@ -8,15 +8,16 @@ const TOKEN = process.env.TOKEN || "590456891:AAEkOXQo2UuYnIw1wnLyKrbKgNyGnJigqb
 
 console.log(PORT,TOKEN);
 let bot = 0
-
+https.createServer({}, (req, res) => {
+  console.log("gotcha")
+  res.writeHead(200);
+  res.end('hello world\n');
+}).listen(PORT);
 
 
 if("HEROKU" in process.env){
   console.log("on heroku")
-  https.createServer({}, (req, res) => {
-    res.writeHead(200);
-    res.end('hello world\n');
-  }).listen(PORT);
+
   bot = new TelegramBot(TOKEN,{polling:true})
 
 
