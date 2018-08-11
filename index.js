@@ -1,4 +1,4 @@
-const https = require('https');
+const express = require('express')
 const fs = require('fs')
 const TelegramBot = require('node-telegram-bot-api');
 
@@ -8,25 +8,31 @@ const TOKEN = process.env.TOKEN || "590456891:AAEkOXQo2UuYnIw1wnLyKrbKgNyGnJigqb
 
 console.log(PORT,TOKEN);
 let bot = 0
-https.createServer({}, (req, res) => {
-  console.log("gotcha")
-  res.writeHead(200);
-  res.end('hello world\n');
-}).listen(PORT);
+let app = express()
+app.all("/hook",(req,res)=>{
+  console.log("y boy")
+  res.end("da")
+})
+app.listen(PORT)
 
 
 if("HEROKU" in process.env){
   console.log("on heroku")
 
-  bot = new TelegramBot(TOKEN,{polling:true})
-
+  bot = new TelegramBot(TOKEN)
+  bot.setWebhook("https://free-audio-bot.herokuapp.com/hook")
 
 }else{
   bot = new TelegramBot(TOKEN,{polling:true})
+
 }
+bot.getMe().then(val => console.log(val))
+
+
+
+
+
 
 bot.on("message",mes =>{
   console.log(mes)
 })
-
-bot.getMe().then(val => console.log(val))
