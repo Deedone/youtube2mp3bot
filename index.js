@@ -11,6 +11,7 @@ let bot = 0
 let app = express()
 app.all("/hook",(req,res)=>{
   console.log("y boy")
+  console.log(req)
   res.end("da")
 })
 app.all("/",(req,res)=>{
