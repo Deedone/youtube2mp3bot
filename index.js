@@ -3,20 +3,7 @@ const fs = require('fs')
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
 const ytdl = require('youtube-dl')
-
-
-
-
-
-ytdl.exec("https://youtu.be/PizwcirYuGY", ['-x', '--audio-format', 'mp3','--audio-quality=0','-o%(id)s.%(ext)s'], {}, function(err, output) {
-  if (err) throw err;
-  console.log(output.join('\n'));
-  console.log(fs.readdirSync("."))
-});
-
-console.log(fs.readdirSync("."))
-
-
+const child_process = require('child_process');
 
 
 
@@ -58,13 +45,42 @@ async function processMessage(m){
 
   console.log("json = ",m)
 
-  let matches = m.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&|$|\?)/)
-  if(matches == null || matches.length() < 2){
-    return
+
+  if('audio' in m && 'caption' in m){
+    let data = m.caption.split(" ")
+    bot.sendAudio(data[0],m.audio.file_id)
   }
 
-  console.log("matches = ",matches)
 
 
+  if(!('text' in m)){
+    return
+  }
+  let matches = m.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&|$|\?)/)
 
+
+  if(matches != null && matches.length == 2){
+    bot.sendMessage(m.chat.id,"Downloading")
+    ytdl.exec(matches[0], ['-x', '--audio-format', 'mp3','--audio-quality=0','-o%(id)s.%(ext)s'], {},async (err, output) => {
+      if (err) throw err;
+      let mes = await bot.sendMessage(m.chat.id,"Uploading to tg servers - 0%")
+    //  console.log(mes)
+      ytdl.getInfo(matches[0],(err, info) => {
+        if (err) throw err;
+        let filename = matches[1]+".mp3"
+        console.log("python3",['client.py',filename,m.chat.id,info.title,matches[1]])
+        let child = child_process.spawn("python3",['client.py',filename,m.chat.id,info.title,matches[1]],{
+          stdio:'pipe'
+        })
+
+        child.stdout.on('data',data => {
+          let str = data.toString()
+          let arr = str.split(" ")
+          let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
+          bot.editMessageText(`Uploading to tg servers - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
+        })
+        child.stderr.on('data',data => console.log("err",data.toString()))
+      })
+    })
+  }
 }
