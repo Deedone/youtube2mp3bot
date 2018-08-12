@@ -4,6 +4,27 @@ const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
 const ytdl = require('youtube-dl')
 const child_process = require('child_process');
+const {Client} = require('pg')
+
+let client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: true,
+});
+client.connect();
+
+client.query('\
+CREATE TABLE IF NOT EXISTS cache(\
+  video_id VARCHAR(11) PRIMARY KEY, \
+  tg_id VARCHAR(64) UNIQUE NOT NULL,\
+  created TIMESTAMP NOT NULL);', (err, res) => {
+  if (err) throw err;
+  console.log("DB CREATED")
+  for (let row of res.rows) {
+    console.log(JSON.stringify(row));
+  }
+  client.end();
+});
+
 
 
 
@@ -16,10 +37,12 @@ let app = express()
 app.use(bodyParser.json())
 
 
-if("HEROKU" in process.env){
+if("HEROKU" in process.env && !("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
+  console.log("USING WEBHOOKS")
   bot = new TelegramBot(TOKEN)
   bot.setWebHook("https://free-audio-bot.herokuapp.com/hook")
 }else{
+  console.log("USING LONG POLLING")
   bot = new TelegramBot(TOKEN,{polling:true})
   bot.deleteWebHook().then(val => console.log("webhook killed:",val))
 
@@ -39,8 +62,6 @@ app.all("/",(req,res)=>{
   processMessage(req.body.message)
 })
 .listen(PORT)
-
-
 
 
 //Promisifying youtube-dl
@@ -63,6 +84,37 @@ function downloadMP3Async(url){
 }
 
 
+async function store(vid, tgid){
+  let client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: true,
+  });
+  await client.connect()
+  await client.query(`INSERT INTO cache VALUES ('${vid}','${tgid}',now());`)
+  await client.end()
+}
+
+async function checkCache(vid, cid){
+  let client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: true,
+  });
+  await client.connect()
+  console.log("SEARCHING "+vid)
+  let res = await client.query(`SELECT * FROM cache WHERE video_id='${vid}'`)
+  await client.end()
+  //console.log(res.rows)
+  if(res.rows.length > 0){
+    console.log("FOUND IN CACHE")
+    await bot.sendAudio(cid,res.rows[0].tg_id)
+    return true
+  }
+  return false
+}
+
+
+
+
 async function processMessage(m){
 
   console.log("data = ",m.text || m.audio || m.document)
@@ -72,7 +124,8 @@ async function processMessage(m){
     let data = m.caption.split(" ")
     // a && b returns b
     let id = ('audio' in m && m.audio.file_id) || ('document' in m && m.document.file_id)
-    bot.sendAudio(data[0],id)
+    await store(data[1],id)
+    await bot.sendAudio(data[0],id)
     return
   }
 
@@ -84,6 +137,13 @@ async function processMessage(m){
 
   if(matches != null && matches.length == 2){
     let [url,video_id] = matches
+    let c = await checkCache(video_id,m.chat.id)
+    if(c){
+      return
+    }
+
+
+
     let filename = video_id+".mp3"
     //This is for parallel execution
     let [mes,info,_] = await Promise.all([bot.sendMessage(m.chat.id,"Downloading video"),getInfoAsync(url),downloadMP3Async(url)])
