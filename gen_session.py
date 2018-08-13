@@ -1,5 +1,4 @@
 from telethon import TelegramClient, sync
-import sys
 import os
 from string_session import StringSession
 
@@ -13,4 +12,4 @@ api_hash = os.getenv("TELEGRAM_APIHASH", "HASH")
 client = TelegramClient(StringSession(), api_id, api_hash)
 client.start()
 
-print(client.session.save())
+print("Your session string is:\n", client.session.save())

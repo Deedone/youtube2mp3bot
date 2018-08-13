@@ -1,11 +1,10 @@
 export TOKEN="BOT TOKEN"
 export TELEGRAM_APPID="00000"
 export TELEGRAM_APIHASH="API HASH"
-export BOT_FORCE_POLLING=0
-export DATABASE_URL=www.my.cool.database.com
+export DATABASE_URL="postgresql://username:password@address:port/dbname" 
 export DOMAIN_URL="https://your.domain.com"
 export TELEGRAM_SESSION_STRING="session string from client.session.save()"
-
+export BOT_FORCE_POLLING=0
 
 if [[ "$1" == "gensession" ]]; then
   python3 gen_session.py
