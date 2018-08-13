@@ -52,7 +52,7 @@ app.all("/",(req,res)=>{
 
 async function processMessage(m){
 
-  console.log(m.text || m.audio || m.document)
+  console.log("\x1b[32m" + (m.text || m.audio || m.document) + "\x1b[0m")
 
 
   if(('audio' in m || 'document' in m)&& 'caption' in m){
@@ -85,7 +85,7 @@ async function processMessage(m){
       .catch(reason=>{})
       animation_index = (animation_index+1)%anim.length
 
-    },500)
+    },1000)
 
     //This is for parallel execution
     let [info,_] = await Promise.all([ytdl.getInfo(url),ytdl.downloadMP3(url)])
@@ -101,11 +101,15 @@ async function processMessage(m){
 
     //script also prints uploaded/total bytes to stdout so we can
     //show nice progressbar to user
+    let lastUpdate = 0
     child.stdout.on('data',data => {
       let arr = data.toString().split(" ")
       let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
-      bot.editMessageText(`Uploading mp3 - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
-      .catch(reason=>{})
+      if(Date.now() - lastUpdate > 1000 || percent == 100){
+        bot.editMessageText(`Uploading mp3 - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
+        .catch(reason=>{})
+        lastUpdate = Date.now()
+      }
     })
     child.stderr.on('data',data => console.log("err",data.toString()))
 
