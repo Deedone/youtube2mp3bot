@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "0"
 const HOOK_URL = process.env.DOMAIN_URL +'/' + TOKEN
 
+const anim = "-\\|/"
 
 console.log(PORT,TOKEN);
 
@@ -51,7 +52,7 @@ app.all("/",(req,res)=>{
 
 async function processMessage(m){
 
-  console.log("data = ",m.text || m.audio || m.document)
+  console.log(m.text || m.audio || m.document)
 
 
   if(('audio' in m || 'document' in m)&& 'caption' in m){
@@ -71,15 +72,25 @@ async function processMessage(m){
 
   if(matches != null && matches.length == 2){
     let [url,video_id] = matches
-
+    let filename = './temp/'+video_id+".mp3"
     if(await cache.check(video_id,m.chat.id,bot)){
       return
     }
 
-    let filename = './temp/'+video_id+".mp3"
-    //This is for parallel execution
-    let [mes,info,_] = await Promise.all([bot.sendMessage(m.chat.id,"Downloading video"),ytdl.getInfo(url),ytdl.downloadMP3(url)])
+    let mes = await bot.sendMessage(m.chat.id,"Downloading video")
+    //Cute little spinning bar
+    let animation_index = 0
+    let timer_id = setInterval(async ()=>{
+      await bot.editMessageText(`Downloading video ${anim[animation_index]}`, {message_id:mes.message_id,chat_id:m.chat.id})
+      .catch(reason=>{})
+      animation_index = (animation_index+1)%anim.length
 
+    },500)
+
+    //This is for parallel execution
+    let [info,_] = await Promise.all([ytdl.getInfo(url),ytdl.downloadMP3(url)])
+
+    clearInterval(timer_id)
     console.log("python3",['client.py',filename,m.chat.id,info.title,video_id])
 
     //Works around telegram's 50mb bot uploads limit
@@ -94,6 +105,7 @@ async function processMessage(m){
       let arr = data.toString().split(" ")
       let percent = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
       bot.editMessageText(`Uploading mp3 - ${percent}%`,{message_id:mes.message_id,chat_id:m.chat.id})
+      .catch(reason=>{})
     })
     child.stderr.on('data',data => console.log("err",data.toString()))
 
