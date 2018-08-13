@@ -4,6 +4,12 @@ export TELEGRAM_APIHASH="API HASH"
 export BOT_FORCE_POLLING=0
 export DATABASE_URL=www.my.cool.database.com
 export DOMAIN_URL="https://your.domain.com"
+export TELEGRAM_SESSION_STRING="session string from client.session.save()"
 
 
-node index.js
+if [[ "$1" == "gensession" ]]; then
+  python3 gen_session.py
+
+else
+  node index.js
+fi
