@@ -17,12 +17,12 @@ CREATE TABLE IF NOT EXISTS cache(\
 
 
 
-exports.store = async function(vid, tgid){
+module.exports.store = async function(vid, tgid){
   await pool.query(`INSERT INTO cache VALUES ('${vid}','${tgid}',now());`)
 }
 
 
-exports.check = async function(vid, cid, bot){
+module.exports.check = async function(vid, cid, bot){
 
   console.log("SEARCHING "+vid)
   let res = await pool.query(`SELECT * FROM cache WHERE video_id='${vid}'`)

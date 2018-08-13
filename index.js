@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const child_process = require('child_process');
 const cache = require('./utils/cache.js')
 const ytdl = require('./utils/ytdl-wrapper.js')
-
+const Keyboards = require("./utils/inline-keyboard-generator.js")
 
 const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "0"
@@ -24,7 +24,7 @@ app.use(bodyParser.json())
 if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
   console.log("USING WEBHOOKS ON "+HOOK_URL)
   bot = new TelegramBot(TOKEN)
-  bot.setWebHook(HOOK_URL)
+  bot.setWebHook(HOOK_URL,{allowed_updates:["message","callback_query"]})
 }else{
   console.log("USING LONG POLLING")
   bot = new TelegramBot(TOKEN,{polling:true})
@@ -33,8 +33,14 @@ if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
 }
 bot.getMe().then(val => console.log("Info about me:",val))
 
+const KGen = new Keyboards(bot)
+
 bot.on("message",mes =>{
   processMessage(mes)
+})
+
+bot.on("callback_query",mes=>{
+  console.log("query "+JSON.stringify(mes))
 })
 
 
@@ -60,7 +66,8 @@ async function processMessage(m){
     // a && b returns b
     let id = ('audio' in m && m.audio.file_id) || ('document' in m && m.document.file_id)
     cache.store(data[1],id)
-    await bot.sendAudio(data[0],id)
+
+    await bot.sendAudio(data[0],id,{reply_markup:KGen.getDefault()},{})
     return
   }
 
