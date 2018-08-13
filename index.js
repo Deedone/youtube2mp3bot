@@ -4,24 +4,20 @@ const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
 const ytdl = require('youtube-dl')
 const child_process = require('child_process');
-const {Client} = require('pg')
+const {Pool} = require('pg')
 
-let client = new Client({
+let pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: true,
 });
-client.connect();
-client.query('\
+pool.connect();
+pool.query('\
 CREATE TABLE IF NOT EXISTS cache(\
   video_id VARCHAR(11) PRIMARY KEY, \
   tg_id VARCHAR(64) UNIQUE NOT NULL,\
   created TIMESTAMP NOT NULL);', (err, res) => {
   if (err) throw err;
   console.log("DB CREATED")
-  for (let row of res.rows) {
-    console.log(JSON.stringify(row));
-  }
-  client.end();
 });
 
 
@@ -86,25 +82,13 @@ function downloadMP3Async(url){
 
 //Caching
 async function store(vid, tgid){
-  let client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: true,
-  });
-  await client.connect()
-  await client.query(`INSERT INTO cache VALUES ('${vid}','${tgid}',now());`)
-  await client.end()
+  await pool.query(`INSERT INTO cache VALUES ('${vid}','${tgid}',now());`)
 }
 
 async function checkCache(vid, cid){
-  let client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: true,
-  });
-  await client.connect()
-  console.log("SEARCHING "+vid)
-  let res = await client.query(`SELECT * FROM cache WHERE video_id='${vid}'`)
-  await client.end()
 
+  console.log("SEARCHING "+vid)
+  let res = await pool.query(`SELECT * FROM cache WHERE video_id='${vid}'`)
 
   if(res.rows.length > 0){
     console.log("FOUND IN CACHE")
