@@ -3,6 +3,7 @@ export TELEGRAM_APPID="00000"
 export TELEGRAM_APIHASH="API HASH"
 export BOT_FORCE_POLLING=0
 export DATABASE_URL=www.my.cool.database.com
+export DOMAIN_URL="https://your.domain.com"
 
 
 node index.js

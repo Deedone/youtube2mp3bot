@@ -11,7 +11,6 @@ let client = new Client({
   ssl: true,
 });
 client.connect();
-
 client.query('\
 CREATE TABLE IF NOT EXISTS cache(\
   video_id VARCHAR(11) PRIMARY KEY, \
@@ -29,7 +28,9 @@ CREATE TABLE IF NOT EXISTS cache(\
 
 
 const PORT = process.env.PORT || 5000
-const TOKEN = process.env.TOKEN || 0
+const TOKEN = process.env.TOKEN || "0"
+const HOOK_URL = process.env.domain + TOKEN
+
 
 console.log(PORT,TOKEN);
 let bot = 0
@@ -40,7 +41,7 @@ app.use(bodyParser.json())
 if("HEROKU" in process.env && !("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
   console.log("USING WEBHOOKS")
   bot = new TelegramBot(TOKEN)
-  bot.setWebHook("https://free-audio-bot.herokuapp.com/hook")
+  bot.setWebHook(HOOK_URL)
 }else{
   console.log("USING LONG POLLING")
   bot = new TelegramBot(TOKEN,{polling:true})
@@ -83,7 +84,7 @@ function downloadMP3Async(url){
   })
 }
 
-
+//Caching
 async function store(vid, tgid){
   let client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -103,7 +104,8 @@ async function checkCache(vid, cid){
   console.log("SEARCHING "+vid)
   let res = await client.query(`SELECT * FROM cache WHERE video_id='${vid}'`)
   await client.end()
-  //console.log(res.rows)
+
+
   if(res.rows.length > 0){
     console.log("FOUND IN CACHE")
     await bot.sendAudio(cid,res.rows[0].tg_id)
@@ -137,12 +139,10 @@ async function processMessage(m){
 
   if(matches != null && matches.length == 2){
     let [url,video_id] = matches
-    let c = await checkCache(video_id,m.chat.id)
-    if(c){
+
+    if(await checkCache(video_id,m.chat.id)){
       return
     }
-
-
 
     let filename = video_id+".mp3"
     //This is for parallel execution
