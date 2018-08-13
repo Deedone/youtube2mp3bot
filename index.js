@@ -49,6 +49,7 @@ app.all("/",(req,res)=>{
 })
 .all(`/${TOKEN}`,(req,res)=>{
   res.end("ok")
+  console.log(req.body)
   processMessage(req.body.message)
 })
 .listen(PORT)
