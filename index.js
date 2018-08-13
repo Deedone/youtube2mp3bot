@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS cache(\
 
 const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "0"
-const HOOK_URL = process.env.domain + TOKEN
+const HOOK_URL = process.env.DOMAIN_URL + TOKEN
 
 
 console.log(PORT,TOKEN);
