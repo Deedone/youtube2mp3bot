@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS cache(\
 
 const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "0"
-const HOOK_URL = process.env.DOMAIN_URL + TOKEN
+const HOOK_URL = process.env.DOMAIN_URL +'/' + TOKEN
 
 
 console.log(PORT,TOKEN);
@@ -39,7 +39,7 @@ app.use(bodyParser.json())
 
 
 if("HEROKU" in process.env && !("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
-  console.log("USING WEBHOOKS")
+  console.log("USING WEBHOOKS ON "+HOOK_URL)
   bot = new TelegramBot(TOKEN)
   bot.setWebHook(HOOK_URL)
 }else{
