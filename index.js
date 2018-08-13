@@ -58,7 +58,7 @@ bot.on("message",mes =>{
 app.all("/",(req,res)=>{
   res.end("nothing to see here")
 })
-.all("/hook",(req,res)=>{
+.all(`/${TOKEN}`,(req,res)=>{
   res.end("ok")
   processMessage(req.body.message)
 })
