@@ -8,6 +8,7 @@
     "express": "^4.16.3",
     "node-telegram-bot-api": "^0.30.0",
     "pg": "^7.4.3",
+    "sleep": "^5.2.3",
     "telegram-mtproto": "^2.2.2",
     "youtube-dl": "^1.12.2"
   },
@@ -17,9 +18,8 @@
   },
   "author": "mynameisthenekit@gmail.com",
   "license": "MIT",
-  "repository" :
-  {
-    "type" : "git",
-    "url" : "https://github.com/Deedone/youtube2mp3bot"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Deedone/youtube2mp3bot"
   }
 }
