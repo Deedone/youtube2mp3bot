@@ -18,9 +18,11 @@ if len(sys.argv) < 5:
     print(0)
     exit()
 
-os.rename(sys.argv[1], sys.argv[3]+".mp3")
+newname = "./temp/"+sys.argv[3]+".mp3"
 
-client.send_file('free_tube_peace_bot', sys.argv[3]+".mp3", caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False)
+os.rename(sys.argv[1], newname)
+
+client.send_file('free_tube_peace_bot', newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False)
 
 
 os.remove(sys.argv[3]+".mp3")

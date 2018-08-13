@@ -2,25 +2,9 @@ const express = require('express')
 const fs = require('fs')
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
-const ytdl = require('youtube-dl')
 const child_process = require('child_process');
-const {Pool} = require('pg')
-
-let pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: true,
-});
-pool.connect();
-pool.query('\
-CREATE TABLE IF NOT EXISTS cache(\
-  video_id VARCHAR(11) PRIMARY KEY, \
-  tg_id VARCHAR(64) UNIQUE NOT NULL,\
-  created TIMESTAMP NOT NULL);', (err, res) => {
-  if (err) throw err;
-  console.log("DB CREATED")
-});
-
-
+const cache = require('./utils/cache.js')
+const ytdl = require('./utils/ytdl-wrapper.js')
 
 
 const PORT = process.env.PORT || 5000
@@ -29,12 +13,14 @@ const HOOK_URL = process.env.DOMAIN_URL +'/' + TOKEN
 
 
 console.log(PORT,TOKEN);
+
+
 let bot = 0
 let app = express()
 app.use(bodyParser.json())
 
 
-if("HEROKU" in process.env && !("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
+if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
   console.log("USING WEBHOOKS ON "+HOOK_URL)
   bot = new TelegramBot(TOKEN)
   bot.setWebHook(HOOK_URL)
@@ -61,44 +47,6 @@ app.all("/",(req,res)=>{
 .listen(PORT)
 
 
-//Promisifying youtube-dl
-function getInfoAsync(url){
-  return new Promise((resolve, reject)=>{
-    ytdl.getInfo(url,(err,info) =>{
-      if (err) reject(err);
-      resolve(info);
-    })
-  })
-}
-
-function downloadMP3Async(url){
-  return new Promise((resolve,reject)=>{
-    ytdl.exec(url, ['-x', '--audio-format', 'mp3','--audio-quality=0','-o%(id)s.%(ext)s'], {},(err, output) => {
-      if (err) reject(err);
-      resolve(output)
-    })
-  })
-}
-
-//Caching
-async function store(vid, tgid){
-  await pool.query(`INSERT INTO cache VALUES ('${vid}','${tgid}',now());`)
-}
-
-async function checkCache(vid, cid){
-
-  console.log("SEARCHING "+vid)
-  let res = await pool.query(`SELECT * FROM cache WHERE video_id='${vid}'`)
-
-  if(res.rows.length > 0){
-    console.log("FOUND IN CACHE")
-    await bot.sendAudio(cid,res.rows[0].tg_id)
-    return true
-  }
-  return false
-}
-
-
 
 
 async function processMessage(m){
@@ -110,7 +58,7 @@ async function processMessage(m){
     let data = m.caption.split(" ")
     // a && b returns b
     let id = ('audio' in m && m.audio.file_id) || ('document' in m && m.document.file_id)
-    await store(data[1],id)
+    cache.store(data[1],id)
     await bot.sendAudio(data[0],id)
     return
   }
@@ -124,13 +72,13 @@ async function processMessage(m){
   if(matches != null && matches.length == 2){
     let [url,video_id] = matches
 
-    if(await checkCache(video_id,m.chat.id)){
+    if(await cache.check(video_id,m.chat.id,bot)){
       return
     }
 
-    let filename = video_id+".mp3"
+    let filename = './temp/'+video_id+".mp3"
     //This is for parallel execution
-    let [mes,info,_] = await Promise.all([bot.sendMessage(m.chat.id,"Downloading video"),getInfoAsync(url),downloadMP3Async(url)])
+    let [mes,info,_] = await Promise.all([bot.sendMessage(m.chat.id,"Downloading video"),ytdl.getInfo(url),ytdl.downloadMP3(url)])
 
     console.log("python3",['client.py',filename,m.chat.id,info.title,video_id])
 
