@@ -2,14 +2,16 @@ const child_process = require('child_process');
 const ytdl = require('./ytdl-wrapper.js')
 const cache = require('./cache.js')
 const Message = require("./message.js")
-
+const sleep = require('sleep')
 const anim = "-\\|/"
 let current = []
 
 
 module.exports = class Processor{
 
-  constructor(incoming, bot){
+
+
+  async do(incoming, bot){
     this.bot = bot
     this.chat_id = incoming.chat.id
     this.text = incoming.text
@@ -19,6 +21,7 @@ module.exports = class Processor{
         let media_id = ('audio' in incoming && incoming.audio.file_id) || ('document' in incoming && incoming.document.file_id)
         let [chat_id,video_id] = incoming.caption.split(" ")
         console.log(chat_id,video_id,media_id)
+        cache.store(video_id, media_id)
         for(let x of current){
           if(x.video_id == video_id){
             x.finish(media_id)
@@ -27,22 +30,29 @@ module.exports = class Processor{
         }
       }else if (this.parseYoutube()){
         this.state = "downloading"
-        this.message = new Message(bot,this.chat_id)
+        this.message = await Message.new(bot,this.chat_id)
+
+
         this.timer = setInterval(()=>this.updateMessage(), 1000)
         this.progress = 0
         current.push(this)
-        this.processVideo()
-
-
+        cache.check(this.video_id).then(cc=>{
+          if(cc){
+            console.log("Cache returned ",cc)
+            this.finish(cc)
+          }else{
+            this.processVideo()
+          }
+        })
       }
   }
 
   async finish(media_id){
     console.log("finish")
+
     this.state = "done"
     clearInterval(this.timer)
-    await this.message.del()
-    this.message =  new Message(this.bot,this.chat_id,false,media_id)
+    await this.message.transformToMedia(media_id)
     console.log(current.length)
     current = current.filter(el=>el!==this)
     console.log(current.length)

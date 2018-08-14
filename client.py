@@ -1,5 +1,6 @@
 from telethon import TelegramClient, sync
 from string_session import StringSession
+from telethon.tl import types
 import sys
 import os
 # These example values won't work. You must get your own api_id and
@@ -20,9 +21,10 @@ if len(sys.argv) < 5:
 
 newname = "./temp/"+sys.argv[3]+".mp3"
 
+
 os.rename(sys.argv[1], newname)
 
-client.send_file('free_tube_peace_bot', newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False)
+client.send_file('free_tube_peace_bot', newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
 
 
 os.remove(newname)

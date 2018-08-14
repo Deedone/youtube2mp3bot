@@ -4,7 +4,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
 
 
-const Keyboards = require("./utils/inline-keyboard-generator.js")
+
 const MProcessor = require("./utils/message-processor.js")
 
 
@@ -37,10 +37,8 @@ if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
 }
 bot.getMe().then(val => console.log("Info about me:",val))
 
-const KGen = new Keyboards(bot)
-
-bot.on("message",mes =>{
-  new MProcessor(mes, bot)
+bot.on("message",async mes =>{
+  new MProcessor().do(mes, bot)
 })
 
 bot.on("callback_query",mes=>{
