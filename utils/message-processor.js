@@ -80,8 +80,6 @@ module.exports = class Processor{
 
   }
 
-
-
   parseYoutube(){
 
     if(!this.text) return false;

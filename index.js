@@ -2,9 +2,9 @@ const express = require('express')
 const fs = require('fs')
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser')
-
-
-
+const fetch = require('node-fetch');
+const KB = require('./utils/inline-keyboard-generator.js')
+const QProcessor = require("./utils/query-processor.js")
 const MProcessor = require("./utils/message-processor.js")
 
 
@@ -37,12 +37,29 @@ if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
 }
 bot.getMe().then(val => console.log("Info about me:",val))
 
+
+bot.editMessageMedia = async function(chat_id,message_id, media_id){
+  let url = `https://api.telegram.org/bot${TOKEN}/editMessageMedia` +
+  `?chat_id=${chat_id}` +
+  `&message_id=${message_id}`+
+  `&media=` + JSON.stringify({type:"audio",media:media_id}) 
+
+  let res = await fetch(url).catch(err => console.log(err))
+  console.log(res)
+  bot.editMessageReplyMarkup(new KB().getDefault(),{chat_id:chat_id, message_id:message_id})
+}
+
+
+
+
 bot.on("message",async mes =>{
   new MProcessor().do(mes, bot)
 })
 
 bot.on("callback_query",mes=>{
-  console.log("query "+JSON.stringify(mes))
+  //console.log("query "+JSON.stringify(mes))
+  QProcessor.new(bot,mes)
+  bot.answerCallbackQuery(mes.id)
 })
 
 

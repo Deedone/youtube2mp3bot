@@ -6,9 +6,9 @@ Heavily inspired by [@AudioTubeBot](t.me/AudioTubeBot) but free and opensource
 * Parses YouTube links and converts them to .mp3 files
 * Stores already uploaded file ids to prevent re-converting of same video
 * Animation for downloading stage
+* Interface for reordering audios
 
 ### TODO:
-* Interface for reordering audios
 * Web interface for Telegram authentication and automatic session storage in DB
 * Playlists(?)
 * Optional use of spare account

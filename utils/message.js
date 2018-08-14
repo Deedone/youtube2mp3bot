@@ -1,11 +1,16 @@
 const K = require("./inline-keyboard-generator.js")
 const sleep = require('sleep')
+const cache = require("./cache.js")
 module.exports = class Message{
 
 
   static async new(bot,chat_id, message_id = false){
     let a = new Message(bot,chat_id, message_id)
-    await a.prepare()
+    if(message_id){
+      await a.loadFromDB(message_id)
+    }else{
+      await a.prepare()
+    }
     return a
   }
 
@@ -15,6 +20,15 @@ module.exports = class Message{
     this.message_id = -1
     this.kbtype = "none"
     this.media_id = -1
+
+  }
+
+  async loadFromDB(mid){
+    let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${this.chat_id} AND message_id=${mid};`)
+    if(res.rows.length != 1) throw `Can't fetch from db ${this.chat_id} ${mid}`
+    this.message_id = res.rows[0].message_id
+    this.kbtype = res.rows[0].kbtype
+    this.media_id = res.rows[0].tg_id
 
   }
 
@@ -33,7 +47,12 @@ module.exports = class Message{
     await this.del()
     let mes = await this.bot.sendAudio(this.chat_id, media_id,{reply_markup:new K(this.bot).getDefault()},{})
     this.message_id = mes.message_id
+    this.media_id = media_id
     this.kbtype = "basic"
+
+    await cache.pool.query(`INSERT INTO messages \
+      (chat_id        , message_id        , tg_id      , kbtype          , created) VALUES\
+      (${this.chat_id}, ${this.message_id}, '${media_id}', '${this.kbtype}', now());`)
   }
 
   async update(text){
@@ -44,6 +63,15 @@ module.exports = class Message{
     while(!(this.isReady())) {await sleep.msleep(50)}
     await this.bot.deleteMessage(this.chat_id, this.message_id)
     this.message_id = -1
+  }
+  async swap(newmes){
+    await this.bot.editMessageMedia(this.chat_id, this.message_id, newmes.media_id)
+    this.updateDBMedia(newmes.media_id)
+    await this.bot.editMessageMedia(newmes.chat_id, newmes.message_id, this.media_id)
+    newmes.updateDBMedia(this.media_id)
+  }
+  async updateDBMedia(mid){
+    cache.pool.query(`UPDATE messages SET tg_id='${mid}' WHERE message_id=${this.message_id} AND chat_id=${this.chat_id}`)
   }
 
 }

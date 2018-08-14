@@ -7,7 +7,7 @@ import os
 # api_hash from https://my.telegram.org, under API Development.
 api_id = os.getenv("TELEGRAM_APPID", 0)
 api_hash = os.getenv("TELEGRAM_APIHASH", "HASH")
-
+botname = os.getenv("BOT_USERNAME", "placeholder")
 session_string = os.getenv("TELEGRAM_SESSION_STRING", "placeholder")
 
 client = TelegramClient(StringSession(session_string), api_id, api_hash)
@@ -24,7 +24,7 @@ newname = "./temp/"+sys.argv[3]+".mp3"
 
 os.rename(sys.argv[1], newname)
 
-client.send_file('free_tube_peace_bot', newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
+client.send_file(botname, newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
 
 
 os.remove(newname)
