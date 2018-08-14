@@ -42,7 +42,7 @@ bot.editMessageMedia = async function(chat_id,message_id, media_id){
   let url = `https://api.telegram.org/bot${TOKEN}/editMessageMedia` +
   `?chat_id=${chat_id}` +
   `&message_id=${message_id}`+
-  `&media=` + JSON.stringify({type:"audio",media:media_id}) 
+  `&media=` + JSON.stringify({type:"audio",media:media_id})
 
   let res = await fetch(url).catch(err => console.log(err))
   console.log(res)
@@ -69,6 +69,11 @@ app.all("/",(req,res)=>{
 .all(`/${TOKEN}`,(req,res)=>{
   res.end("ok")
   console.log(req.body)
-  new MProcessor(req.body.message, bot)
+  if('message' in req.body){
+    new MProcessor(req.body.message, bot)
+  }else if('callback_query' in req.body){
+    QProcessor().new(bot,req.body.callback_query)
+    bot.answerCallbackQuery(req.body.callback_query.id)
+  }
 })
 .listen(PORT)
