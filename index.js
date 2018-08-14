@@ -72,7 +72,7 @@ app.all("/",(req,res)=>{
   if('message' in req.body){
     new MProcessor().do(req.body.message, bot)
   }else if('callback_query' in req.body){
-    QProcessor().new(bot,req.body.callback_query)
+    QProcessor.new(bot,req.body.callback_query)
     bot.answerCallbackQuery(req.body.callback_query.id)
   }
 })
