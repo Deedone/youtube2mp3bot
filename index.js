@@ -45,7 +45,7 @@ bot.editMessageMedia = async function(chat_id,message_id, media_id){
   `&media=` + JSON.stringify({type:"audio",media:media_id})
 
   let res = await fetch(url).catch(err => console.log(err))
-  console.log(res)
+  //console.log(res)
   bot.editMessageReplyMarkup(new KB().getDefault(),{chat_id:chat_id, message_id:message_id})
 }
 
@@ -68,7 +68,7 @@ app.all("/",(req,res)=>{
 })
 .all(`/${TOKEN}`,(req,res)=>{
   res.end("ok")
-  console.log(req.body)
+  //console.log(req.body)
   if('message' in req.body){
     new MProcessor().do(req.body.message, bot)
   }else if('callback_query' in req.body){
