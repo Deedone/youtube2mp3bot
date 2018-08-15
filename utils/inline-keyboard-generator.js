@@ -23,7 +23,11 @@ module.exports = class Generator{
             {
               text:"\u2795",
               callback_data:"d_4"
-            }
+            },
+						{
+							text:"🗑️",
+							callback_data:"d_5"
+						}
           ]
         ]
       })

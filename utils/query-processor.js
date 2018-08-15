@@ -27,23 +27,27 @@ module.exports = class QProcessor{
     if(dir == "<") order = "DESC"
     if(dir == ">") order = "ASC"
     let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${this.chat_id} AND message_id${dir}${id} ORDER BY message_id ${order} LIMIT 1`)
-    console.log(`SELECT * FROM messages WHERE chat_id=${this.chat_id} AND message_id${dir}${id} ORDER BY message_id ${order} LIMIT 1`)
+    
     return res.rows[0]
 
   }
 
 
   async processBasicKeyboard(){
-    let target
     if(this.data[2] == "1"){
-      target = await this.getMessage(this.message.message_id,"<")
+      let target = await this.getMessage(this.message.message_id,"<")
+			let newmes = await Message.new(this.bot,target.chat_id,target.message_id)
+			await this.message.swap(newmes)
     }
     if(this.data[2] == "2"){
-      target = await this.getMessage(this.message.message_id,">")
+      let target = await this.getMessage(this.message.message_id,">")
+			let newmes = await Message.new(this.bot,target.chat_id,target.message_id)
+			await this.message.swap(newmes)
     }
-    console.log(JSON.stringify(target))
-    let newmes = await Message.new(this.bot,target.chat_id,target.message_id)
-    await this.message.swap(newmes)
+		if(this.data[2] == "5"){
+			this.message.del(true)
+		}
+    
 
   }
 

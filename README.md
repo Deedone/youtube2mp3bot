@@ -11,6 +11,7 @@ Heavily inspired by [@AudioTubeBot](t.me/AudioTubeBot) but free and opensource
 ### TODO:
 * Web interface for Telegram authentication and automatic session storage in DB
 * Playlists(?)
+* Ability to download entire YouTube playlists
 * Optional use of spare account
 * Optional fallback to SQLite
 

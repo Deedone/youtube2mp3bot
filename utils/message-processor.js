@@ -17,7 +17,10 @@ module.exports = class Processor{
     this.text = incoming.text
     console.log("Incoming message: ",this.text)
     this.aindex = 0
-      if(('audio' in incoming || 'document' in incoming)&& 'caption' in incoming){
+			if(this.text && this.text== "/rebuild"){
+				this.fixPlaylist()
+				return
+			}else if(('audio' in incoming || 'document' in incoming)&& 'caption' in incoming){
         let media_id = ('audio' in incoming && incoming.audio.file_id) || ('document' in incoming && incoming.document.file_id)
         let [chat_id,video_id] = incoming.caption.split(" ")
         console.log(chat_id,video_id,media_id)
@@ -46,6 +49,22 @@ module.exports = class Processor{
         })
       }
   }
+	
+	async fixPlaylist(){
+		let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${this.chat_id}`)
+		console.log(`Fixing playlist for ${this.chat_id}`)
+
+		for(let r of res.rows){
+			try{
+				let old = await Message.new(this.bot, this.chat_id, r.message_id)
+				old.del(true)
+			}catch (err){
+				console.log("sad but true")
+			}
+			let n = await Message.new(this.bot, this.chat_id, false, r.tg_id)
+			
+		}
+	}
 
   async finish(media_id){
     console.log("finish")
@@ -53,9 +72,9 @@ module.exports = class Processor{
     this.state = "done"
     clearInterval(this.timer)
     await this.message.transformToMedia(media_id)
-    console.log(current.length)
+    
     current = current.filter(el=>el!==this)
-    console.log(current.length)
+    
   }
 
   updateMessage(){

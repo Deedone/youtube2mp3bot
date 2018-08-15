@@ -52,7 +52,7 @@ bot.editMessageMedia = async function(chat_id,message_id, media_id){
 
 
 
-bot.on("message",async mes =>{
+bot.on("message", mes =>{
   new MProcessor().do(mes, bot)
 })
 
