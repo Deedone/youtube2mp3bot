@@ -22,6 +22,7 @@ let app = express()
 app.use(bodyParser.json())
 
 
+
 if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
   console.log("USING WEBHOOKS ON "+HOOK_URL)
   bot = new TelegramBot(TOKEN)
@@ -35,9 +36,9 @@ if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
   });
 
 }
-bot.getMe().then(val => console.log("Info about me:",val))
 
 
+//Newest API stuff
 bot.editMessageMedia = async function(chat_id,message_id, media_id){
   let url = `https://api.telegram.org/bot${TOKEN}/editMessageMedia` +
   `?chat_id=${chat_id}` +
@@ -48,8 +49,6 @@ bot.editMessageMedia = async function(chat_id,message_id, media_id){
   //console.log(res)
   bot.editMessageReplyMarkup(new KB().getDefault(),{chat_id:chat_id, message_id:message_id})
 }
-
-
 
 
 bot.on("message", mes =>{

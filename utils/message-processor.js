@@ -31,7 +31,7 @@ module.exports = class Processor{
             break
           }
         }
-      }else if (this.parseYoutube()){
+      }else if (await this.parseYoutube()){
         this.state = "downloading"
         this.message = await Message.new(bot,this.chat_id)
 
@@ -61,7 +61,7 @@ module.exports = class Processor{
 			}catch (err){
 				console.log("sad but true")
 			}
-			let n = await Message.new(this.bot, this.chat_id, false, r.tg_id)
+			let n = await Message.new(this.bot, this.chat_id, false, r.tg_id, r.title)
 			
 		}
 	}
@@ -71,6 +71,7 @@ module.exports = class Processor{
 
     this.state = "done"
     clearInterval(this.timer)
+		this.message.title = this.title
     await this.message.transformToMedia(media_id)
     
     current = current.filter(el=>el!==this)
@@ -87,9 +88,9 @@ module.exports = class Processor{
   }
 
   async processVideo(){
-    let [info,_] = await Promise.all([ytdl.getInfo(this.url),ytdl.downloadMP3(this.url)])
-    console.log("python3",['client.py',this.filename,this.chat_id,info.title,this.video_id])
-    let child = child_process.spawn("python3",['./client.py',this.filename,this.chat_id,info.title,this.video_id],{stdio:'pipe'})
+		await ytdl.downloadMP3(this.url)
+    console.log("python3",['client.py',this.filename,this.chat_id,this.title,this.video_id])
+    let child = child_process.spawn("python3",['./client.py',this.filename,this.chat_id,this.title,this.video_id],{stdio:'pipe'})
     this.state = "uploading"
     child.stdout.on('data',data => {
       let arr = data.toString().split(" ")
@@ -99,7 +100,7 @@ module.exports = class Processor{
 
   }
 
-  parseYoutube(){
+  async parseYoutube(){
 
     if(!this.text) return false;
     let matches = this.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&|$|\?)/)
@@ -107,6 +108,8 @@ module.exports = class Processor{
       this.url = matches[0]
       this.video_id = matches[1]
       this.filename = './temp/'+this.video_id+".mp3"
+			let info = await ytdl.getInfo(this.url)
+			this.title = info.title
       return true
     }
     return false

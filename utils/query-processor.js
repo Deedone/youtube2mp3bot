@@ -16,7 +16,9 @@ module.exports = class QProcessor{
 
     if(th.data[0] == "d"){
       th.processBasicKeyboard()
-    }
+    }else if(th.data[0] == "s"){
+			th.processSongsKeyboard()
+		}
 
     return th
   }
@@ -44,12 +46,18 @@ module.exports = class QProcessor{
 			let newmes = await Message.new(this.bot,target.chat_id,target.message_id)
 			await this.message.swap(newmes)
     }
+		if(this.data[2] == "3"){
+			await this.message.updateKeyBoard("songs")
+		}
 		if(this.data[2] == "5"){
 			this.message.del(true)
 		}
     
 
   }
+	async processSongsKeyboard(){
+		await	this.message.updateKeyBoard("basic")
+	}
 
 
 }

@@ -26,6 +26,10 @@ async function setup(){
       kbtype VARCHAR(32) NOT NULL,\
       created TIMESTAMP NOT NULL);\
   ')
+	await pool.query('\
+		ALTER TABLE messages\
+			ADD COLUMN IF NOT EXISTS title VARCHAR(255),\
+			ADD COLUMN IF NOT EXISTS playlist VARCHAR(255)[];')
   console.log("DB CREATED")
 }
 

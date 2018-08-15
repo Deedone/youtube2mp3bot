@@ -9,28 +9,27 @@ let processing = []
 module.exports = class Message{
 
 
-  static async new(bot,chat_id, message_id = false, media_id=false){
-    let a = new Message(bot,chat_id, message_id)
+  static async new(bot,chat_id, message_id = false, media_id=false, title="Notitle"){
+    let a = new Message(bot,chat_id, message_id, title)
     if(message_id){
       await a.loadFromDB(message_id)
     }else if(!message_id && media_id){
 			await a.sendMedia(media_id)
 			await a.saveDB()
-			
-			
 		}else{
       await a.prepare()
     }
     return a
   }
 
-  constructor(bot,chat_id, message_id = false){
+  constructor(bot,chat_id, message_id = false, title){
     this.bot = bot
     this.chat_id = chat_id
     this.message_id = -1
     this.kbtype = "none"
     this.media_id = -1
-
+		this.title = title
+		this.playlist = ["a","b"]
   }
 
   async loadFromDB(mid){
@@ -40,6 +39,8 @@ module.exports = class Message{
     this.kbtype = res.rows[0].kbtype
     this.media_id = res.rows[0].tg_id
 		this.saved = true
+		this.title = res.rows[0].title
+		this.playlist = res.rows[0].playlist
 
   }
 
@@ -49,9 +50,7 @@ module.exports = class Message{
 		this.saved = false
   }
 
-
   isReady(){
-
     return this.message_id != -1
   }
 
@@ -60,12 +59,12 @@ module.exports = class Message{
     let mes = await this.bot.sendAudio(this.chat_id, media_id,{reply_markup:new K(this.bot).getDefault()},{})
     this.message_id = mes.message_id
     this.media_id = media_id
+    this.kbtype = "basic"
 	}
 
   async transformToMedia(media_id){
     await this.del()
 		await this.sendMedia(media_id)
-    this.kbtype = "basic"
 
 		this.saveDB()
   }
@@ -86,6 +85,16 @@ module.exports = class Message{
     await this.bot.deleteMessage(this.chat_id, this.message_id)
     this.message_id = -1
   }
+	async updateKeyBoard(newtype){
+		if(newtype == "basic"){
+			this.bot.editMessageReplyMarkup(new K(this.bot).getDefault(),{chat_id:this.chat_id,message_id:this.message_id})
+		}
+		if(newtype == "songs"){
+			this.bot.editMessageReplyMarkup(await new K(this.bot).getSongs(this.chat_id),{chat_id:this.chat_id,message_id:this.message_id})
+		}
+		this.kbtype = newtype
+		this.updateDB()
+	}
   async swap(newmes){
 
 		let safekey1 = this.chat_id.toString() + this.message_id.toString()
@@ -107,9 +116,18 @@ module.exports = class Message{
     await this.bot.editMessageMedia(this.chat_id, this.message_id, newmes.media_id).catch(err => {console.log("sad sad sad")})
     await this.bot.editMessageMedia(newmes.chat_id, newmes.message_id, this.media_id).catch(err => {console.log("sad sad sad")})
 
-		let t = newmes.media_id
-		newmes.media_id = this.media_id
-		this.media_id = t
+		let t1 = this.media_id
+		let t2 = this.title
+		let t3 = this.playlist
+
+		this.media_id = newmes.media_id
+    this.title = 		newmes.title
+    this.playlist = newmes.playlist
+		
+		newmes.media_id = t1 
+		newmes.title =    t2 
+		newmes.playlist = t3 
+		
 
     await newmes.updateDB()
     await this.updateDB()
@@ -123,14 +141,18 @@ module.exports = class Message{
   }
 
 	async saveDB(){
+		console.log(`INSERT INTO messages \
+      (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
+      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join('","')}"}');`)
     await cache.pool.query(`INSERT INTO messages \
-      (chat_id        , message_id        , tg_id      , kbtype          , created) VALUES\
-      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now());`)
+      (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
+      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join('","')}"}');`)
 	}
 
   async updateDB(){
     cache.pool.query(`UPDATE messages SET chat_id=${this.chat_id}, message_id=${this.message_id},\
-			tg_id='${this.media_id}', kbtype='${this.kbtype}' \
+			tg_id='${this.media_id}', kbtype='${this.kbtype}',\
+			title='${this.title}', playlist='{"${this.playlist.join('","')}"}'\
 			WHERE message_id=${this.message_id} AND chat_id=${this.chat_id}`)
   }
 
