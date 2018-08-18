@@ -41,6 +41,7 @@ module.exports = class Message{
 		this.saved = true
 		this.title = res.rows[0].title
 		this.playlist = res.rows[0].playlist
+		console.log(`loaded from db ${this.message_id} ${this.title}`)
 
   }
 
@@ -110,7 +111,7 @@ module.exports = class Message{
  
 		
 		console.log(`swap started for ${this.message_id} and ${newmes.message_id}`)
-
+		console.log(`${this.title} ${newmes.title}`)
 
 
     await this.bot.editMessageMedia(this.chat_id, this.message_id, newmes.media_id).catch(err => {console.log("sad sad sad",err.message)})
@@ -150,7 +151,7 @@ module.exports = class Message{
 	}
 
   async updateDB(){
-    cache.pool.query(`UPDATE messages SET chat_id=${this.chat_id}, message_id=${this.message_id},\
+    await cache.pool.query(`UPDATE messages SET chat_id=${this.chat_id}, message_id=${this.message_id},\
 			tg_id='${this.media_id}', kbtype='${this.kbtype}',\
 			title='${this.title}', playlist='{"${this.playlist.join("\",\"")}"}'\
 			WHERE message_id=${this.message_id} AND chat_id=${this.chat_id}`)

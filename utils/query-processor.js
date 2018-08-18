@@ -56,7 +56,29 @@ module.exports = class QProcessor{
   }
 	async processSongsKeyboard(){
 		await	this.message.updateKeyBoard("basic")
+		let newid = parseInt(this.data.split("_")[1])
+		if(newid == 0){
+			return
+		}else{
+			await this.shift(this.message.message_id,newid)
+		}
 	}
-
+	async shift(from, to){
+		let mi = Math.min(from,to)
+		let ma = Math.max(from,to)
+		let messages = await cache.pool.query("SELECT * FROM messages WHERE message_id>=$1 AND message_id<=$2 AND chat_id=$3 ORDER BY message_id",[mi,ma,this.message.chat_id])
+		.catch(r=>{console.log(r.message)})
+		messages = messages.rows
+		console.log(`got ${messages.length} mes's to swap`)
+		if(from>to){
+			console.log("reversing")
+			messages.reverse()
+		}
+		for(let i=0;i<messages.length-1;i++){
+			let mes1 = await Message.new(this.bot,messages[i].chat_id,messages[i].message_id).catch(err=>console.log(err.message))
+			let mes2 = await Message.new(this.bot,messages[i+1].chat_id,messages[i+1].message_id).catch(err=>console.log(err.message))
+			await mes1.swap(mes2)
+		} 
+	}
 
 }

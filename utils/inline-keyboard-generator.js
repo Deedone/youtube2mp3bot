@@ -43,6 +43,7 @@ module.exports = class Generator{
 				m.updateKeyBoard("basic")
 			}
 			let key = []
+			key.push([{text:"Back",callback_data:"s_0"}])
 			for(let r of res.rows){
 				key.push([{text:r.title,callback_data:`s_${r.message_id}`}])
 			}
