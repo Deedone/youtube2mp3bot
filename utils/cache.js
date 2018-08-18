@@ -1,23 +1,20 @@
 
-const {Pool} = require('pg')
+const {Pool} = require("pg")
 
 let pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: true,
-});
+})
 
 async function setup(){
-  pool.connect();
-  pool.query('\
+  pool.connect()
+  await pool.query("\
   CREATE TABLE IF NOT EXISTS cache(\
     video_id VARCHAR(11) PRIMARY KEY, \
     tg_id VARCHAR(64) UNIQUE NOT NULL,\
-    created TIMESTAMP NOT NULL);', (err, res) => {
-    if (err) throw err;
+    created TIMESTAMP NOT NULL);" )
 
-  });
-
-  await pool.query('\
+  await pool.query("\
     CREATE TABLE IF NOT EXISTS messages(\
       id BIGSERIAL PRIMARY KEY,\
       chat_id BIGINT NOT NULL,\
@@ -25,11 +22,11 @@ async function setup(){
       tg_id VARCHAR(64) NOT NULL,\
       kbtype VARCHAR(32) NOT NULL,\
       created TIMESTAMP NOT NULL);\
-  ')
-	await pool.query('\
+  ")
+	await pool.query("\
 		ALTER TABLE messages\
 			ADD COLUMN IF NOT EXISTS title VARCHAR(255),\
-			ADD COLUMN IF NOT EXISTS playlist VARCHAR(255)[];')
+			ADD COLUMN IF NOT EXISTS playlist VARCHAR(255)[];")
   console.log("DB CREATED")
 }
 

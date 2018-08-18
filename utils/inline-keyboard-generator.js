@@ -1,4 +1,4 @@
-const cache = require('./cache.js')
+const cache = require("./cache.js")
 
 
 module.exports = class Generator{
@@ -35,12 +35,12 @@ module.exports = class Generator{
       })
     }
 		async getSongs(chat_id){
-			let Message = require('./message.js')
+			let Message = require("./message.js")
 			let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${chat_id} ORDER BY message_id`)
 			let forceclose = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${chat_id} AND kbtype='songs'`)
 			for(let r of forceclose.rows){
 				let m = await Message.new(this.bot,r.chat_id,r.message_id)
-				m.updateKeyBoard('basic')
+				m.updateKeyBoard("basic")
 			}
 			let key = []
 			for(let r of res.rows){

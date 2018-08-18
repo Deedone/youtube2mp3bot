@@ -21,7 +21,6 @@ if len(sys.argv) < 5:
 
 newname = "./temp/"+sys.argv[3]+".mp3"
 
-
 os.rename(sys.argv[1], newname)
 
 client.send_file(botname, newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])

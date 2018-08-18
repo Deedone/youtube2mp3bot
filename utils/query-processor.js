@@ -1,6 +1,5 @@
-const cache = require('./cache.js')
+const cache = require("./cache.js")
 const Message = require("./message.js")
-const sleep = require('sleep')
 
 
 module.exports = class QProcessor{

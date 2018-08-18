@@ -1,5 +1,5 @@
 const K = require("./inline-keyboard-generator.js")
-const sleep = require('sleep')
+const sleep = require("sleep")
 const cache = require("./cache.js")
 
 
@@ -10,7 +10,7 @@ module.exports = class Message{
 
 
   static async new(bot,chat_id, message_id = false, media_id=false, title="Notitle"){
-    let a = new Message(bot,chat_id, message_id, title)
+    let a = new Message(bot,chat_id, title)
     if(message_id){
       await a.loadFromDB(message_id)
     }else if(!message_id && media_id){
@@ -22,7 +22,7 @@ module.exports = class Message{
     return a
   }
 
-  constructor(bot,chat_id, message_id = false, title){
+  constructor(bot,chat_id, title){
     this.bot = bot
     this.chat_id = chat_id
     this.message_id = -1
@@ -71,7 +71,7 @@ module.exports = class Message{
 
   async update(text){
     while(!this.isReady()) await sleep.msleep(50)
-    await this.bot.editMessageText(text,{message_id:this.message_id, chat_id:this.chat_id}).catch(r=>{})
+    await this.bot.editMessageText(text,{message_id:this.message_id, chat_id:this.chat_id}).catch(r=>{console.log(r.message)})
   }
   async del(fromDB = false){
     while(!(this.isReady())) {await sleep.msleep(50)}
@@ -107,14 +107,14 @@ module.exports = class Message{
 		}
 		processing.push(safekey1)	
 		processing.push(safekey2)	
-		  
+ 
 		
 		console.log(`swap started for ${this.message_id} and ${newmes.message_id}`)
 
 
 
-    await this.bot.editMessageMedia(this.chat_id, this.message_id, newmes.media_id).catch(err => {console.log("sad sad sad")})
-    await this.bot.editMessageMedia(newmes.chat_id, newmes.message_id, this.media_id).catch(err => {console.log("sad sad sad")})
+    await this.bot.editMessageMedia(this.chat_id, this.message_id, newmes.media_id).catch(err => {console.log("sad sad sad",err.message)})
+    await this.bot.editMessageMedia(newmes.chat_id, newmes.message_id, this.media_id).catch(err => {console.log("sad sad sad",err.message)})
 
 		let t1 = this.media_id
 		let t2 = this.title
@@ -141,18 +141,18 @@ module.exports = class Message{
   }
 
 	async saveDB(){
-		console.log(`INSERT INTO messages \
-      (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
-      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join('","')}"}');`)
+//		console.log(`INSERT INTO messages \
+//      (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
+//      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join("\",\"")}"}');`)
     await cache.pool.query(`INSERT INTO messages \
       (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
-      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join('","')}"}');`)
+      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join("\",\"")}"}');`)
 	}
 
   async updateDB(){
     cache.pool.query(`UPDATE messages SET chat_id=${this.chat_id}, message_id=${this.message_id},\
 			tg_id='${this.media_id}', kbtype='${this.kbtype}',\
-			title='${this.title}', playlist='{"${this.playlist.join('","')}"}'\
+			title='${this.title}', playlist='{"${this.playlist.join("\",\"")}"}'\
 			WHERE message_id=${this.message_id} AND chat_id=${this.chat_id}`)
   }
 

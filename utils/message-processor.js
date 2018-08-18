@@ -1,8 +1,7 @@
-const child_process = require('child_process');
-const ytdl = require('./ytdl-wrapper.js')
-const cache = require('./cache.js')
+const child_process = require("child_process")
+const ytdl = require("./ytdl-wrapper.js")
+const cache = require("./cache.js")
 const Message = require("./message.js")
-const sleep = require('sleep')
 const anim = "-\\|/"
 let current = []
 
@@ -20,8 +19,8 @@ module.exports = class Processor{
 			if(this.text && this.text== "/rebuild"){
 				this.fixPlaylist()
 				return
-			}else if(('audio' in incoming || 'document' in incoming)&& 'caption' in incoming){
-        let media_id = ('audio' in incoming && incoming.audio.file_id) || ('document' in incoming && incoming.document.file_id)
+			}else if(("audio" in incoming || "document" in incoming)&& "caption" in incoming){
+        let media_id = ("audio" in incoming && incoming.audio.file_id) || ("document" in incoming && incoming.document.file_i)
         let [chat_id,video_id] = incoming.caption.split(" ")
         console.log(chat_id,video_id,media_id)
         cache.store(video_id, media_id)
@@ -61,7 +60,7 @@ module.exports = class Processor{
 			}catch (err){
 				console.log("sad but true")
 			}
-			let n = await Message.new(this.bot, this.chat_id, false, r.tg_id, r.title)
+			await Message.new(this.bot, this.chat_id, false, r.tg_id, r.title)
 			
 		}
 	}
@@ -89,25 +88,25 @@ module.exports = class Processor{
 
   async processVideo(){
 		await ytdl.downloadMP3(this.url)
-    console.log("python3",['client.py',this.filename,this.chat_id,this.title,this.video_id])
-    let child = child_process.spawn("python3",['./client.py',this.filename,this.chat_id,this.title,this.video_id],{stdio:'pipe'})
+    console.log("python3",["client.py",this.filename,this.chat_id,this.title,this.video_id])
+    let child = child_process.spawn("python3",["./client.py",this.filename,this.chat_id,this.title,this.video_id],{stdio:"pipe"})
     this.state = "uploading"
-    child.stdout.on('data',data => {
+    child.stdout.on("data",data => {
       let arr = data.toString().split(" ")
       this.progress = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
     })
-    child.stderr.on('data',data => console.log("err",data.toString()))
+    child.stderr.on("data",data => console.log("err",data.toString()))
 
   }
 
   async parseYoutube(){
 
-    if(!this.text) return false;
-    let matches = this.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&|$|\?)/)
+    if(!this.text) return false
+    let matches = this.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&| |$|\?)/)
     if(matches != null && matches.length == 2){
       this.url = matches[0]
       this.video_id = matches[1]
-      this.filename = './temp/'+this.video_id+".mp3"
+      this.filename = "./temp/"+this.video_id+".mp3"
 			let info = await ytdl.getInfo(this.url)
 			this.title = info.title
       return true
