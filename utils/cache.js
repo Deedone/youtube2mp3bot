@@ -28,6 +28,13 @@ async function setup(){
 			ADD COLUMN IF NOT EXISTS title VARCHAR(255),\
 			ADD COLUMN IF NOT EXISTS playlist VARCHAR(255)[];")
   console.log("DB CREATED")
+	await pool.query("\
+		CREATE TABLE IF NOT EXISTS users(\
+		chat_id BIGINT PRIMARY KEY,\
+		playlists VARCHAR(255)[] NOT NULL,\
+		cur_playlist VARCHAR(255) NOT NULL,\
+		session_string TEXT);")
+
 }
 
 
@@ -51,4 +58,12 @@ module.exports.check = async function(vid){
     return res.rows[0].tg_id
   }
   return false
+}
+
+module.exports.createuser = async function(chat_id){
+	console.log(`Creating new user ${chat_id}`)
+	await pool.query(`INSERT INTO users(chat_id, playlists, cur_playlist)
+									VALUES ($1,$2,$3)
+							ON CONFLICT(chat_id) DO NOTHING;`,
+							[chat_id,["main"],"main"])
 }

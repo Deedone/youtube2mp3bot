@@ -36,7 +36,7 @@ module.exports = class Generator{
     }
 		async getSongs(chat_id){
 			let Message = require("./message.js")
-			let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${chat_id} ORDER BY message_id`)
+			let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${chat_id} ORDER BY created`)
 			let forceclose = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${chat_id} AND kbtype='songs'`)
 			for(let r of forceclose.rows){
 				let m = await Message.new(this.bot,r.chat_id,r.message_id)
@@ -47,6 +47,23 @@ module.exports = class Generator{
 			for(let r of res.rows){
 				key.push([{text:r.title,callback_data:`s_${r.message_id}`}])
 			}
+			return JSON.stringify({inline_keyboard:key})	
+		}
+		async getPlaylists(chat_id){
+			let Message = require("./message.js")
+			let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[chat_id])
+			let key = []
+			key.push([{text:"Back",callback_data:"p_-1"}])
+			for(let i=0;i<res.rows[0].playlists.length;i++){
+				key.push([{text:res.rows[0].playlists[i],callback_data:`p_${i}`}])
+		
+		}
+			let forceclose = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${chat_id} AND kbtype='playlists'`)
+			for(let r of forceclose.rows){
+				let m = await Message.new(this.bot,r.chat_id,r.message_id)
+				m.updateKeyBoard("basic")
+			}
+			
 			return JSON.stringify({inline_keyboard:key})	
 		}
 

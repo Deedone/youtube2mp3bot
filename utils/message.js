@@ -9,7 +9,15 @@ let processing = []
 module.exports = class Message{
 
 
-  static async new(bot,chat_id, message_id = false, media_id=false, title="Notitle"){
+	static async resend(bot, row){
+		let a = new Message(bot, row.chat_id, row.title)
+		await a.sendMedia(row.tg_id)
+		a.id = row.id
+		await a.updateMessageId()
+		return a
+	}
+
+  static async new(bot,chat_id, message_id = false, media_id=false,title="Notitle"){
     let a = new Message(bot,chat_id, title)
     if(message_id){
       await a.loadFromDB(message_id)
@@ -29,7 +37,7 @@ module.exports = class Message{
     this.kbtype = "none"
     this.media_id = -1
 		this.title = title
-		this.playlist = ["a","b"]
+		this.playlist = ["main"]
   }
 
   async loadFromDB(mid){
@@ -83,7 +91,7 @@ module.exports = class Message{
 		}
 
 
-    await this.bot.deleteMessage(this.chat_id, this.message_id)
+    await this.bot.deleteMessage(this.chat_id, this.message_id).catch(err=>console.log(err.message))
     this.message_id = -1
   }
 	async updateKeyBoard(newtype){
@@ -92,6 +100,9 @@ module.exports = class Message{
 		}
 		if(newtype == "songs"){
 			this.bot.editMessageReplyMarkup(await new K(this.bot).getSongs(this.chat_id),{chat_id:this.chat_id,message_id:this.message_id})
+		}
+		if(newtype == "playlists"){
+			this.bot.editMessageReplyMarkup(await new K(this.bot).getPlaylists(this.chat_id),{chat_id:this.chat_id,message_id:this.message_id})
 		}
 		this.kbtype = newtype
 		this.updateDB()
@@ -141,13 +152,17 @@ module.exports = class Message{
 		
   }
 
+	async updateMessageId(){
+		await cache.pool.query("UPDATE messages SET message_id=$1 WHERE id=$2",[this.message_id, this.id])
+	}
 	async saveDB(){
 //		console.log(`INSERT INTO messages \
 //      (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
 //      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join("\",\"")}"}');`)
     await cache.pool.query(`INSERT INTO messages \
       (chat_id        , message_id        , tg_id             , kbtype          , created,title        ,playlist) VALUES\
-      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join("\",\"")}"}');`)
+      (${this.chat_id}, ${this.message_id}, '${this.media_id}', '${this.kbtype}', now()  ,'${this.title}','{"${this.playlist.join("\",\"")}"}')\
+			;`)
 	}
 
   async updateDB(){

@@ -17,8 +17,30 @@ module.exports = class Processor{
     console.log("Incoming message: ",this.text)
     this.aindex = 0
 			if(this.text && this.text== "/rebuild"){
-				this.fixPlaylist()
+				this.fixPlaylist(this.chat_id)
 				return
+			}else if(this.text && this.text.search(/\/change /) != -1){
+				let name = this.text.substring(8)
+				console.log("changing playlist to ",name)
+				await this.changePlaylist(name)
+				console.log("done")
+				
+			}else if(this.text && this.text.search(/\/create /) != -1){
+				let name = this.text.substring(8)
+				await cache.pool.query("UPDATE users SET playlists=array_append(playlists,$1) WHERE chat_id=$2",[name,this.chat_id])
+				let resp = await Message.new(bot, this.chat_id)
+				resp.update(`New playlist ${name} created`)
+			}else if(this.text && this.text=="/start"){
+				cache.createuser(this.chat_id).catch(err=>console.log(err.message))
+				let welcome = await Message.new(bot,this.chat_id)
+				if("from" in incoming){
+					welcome.update(`Hello, ${incoming.from.first_name}!
+Send me link to YouTube video to see magic`)
+				}else{
+					welcome.update(`Hello, stranger(s)!
+Send me link yo YouTube video to see magic`)
+				}
+
 			}else if(("audio" in incoming || "document" in incoming)&& "caption" in incoming){
         let media_id = ("audio" in incoming && incoming.audio.file_id) || ("document" in incoming && incoming.document.file_i)
         let [chat_id,video_id] = incoming.caption.split(" ")
@@ -50,7 +72,11 @@ module.exports = class Processor{
   }
 	
 	async fixPlaylist(){
-		let res = await cache.pool.query(`SELECT * FROM messages WHERE chat_id=${this.chat_id}`)
+		let user =   await cache.pool.query("SELECT * FROM users WHERE chat_id =$1;",[this.chat_id])
+		let curplaylist = user.rows[0].cur_playlist
+		console.log("cur playlist - ",curplaylist)
+		let res = await cache.pool.query("SELECT * FROM messages WHERE chat_id=$1 AND $2 = ANY(playlist);",[this.chat_id, curplaylist])
+		console.log("res rows = ",res.rows)
 		console.log(`Fixing playlist for ${this.chat_id}`)
 
 		for(let r of res.rows){
@@ -64,6 +90,30 @@ module.exports = class Processor{
 			
 		}
 	}
+	async changePlaylist(newplaylist){
+		let user =   await cache.pool.query("SELECT * FROM users WHERE chat_id =$1;",[this.chat_id])
+		let curplaylist = user.rows[0].cur_playlist
+		let res = await cache.pool.query("SELECT * FROM messages WHERE chat_id=$1 AND $2 = ANY(playlist);",[this.chat_id, curplaylist])
+		console.log("res rows = ",res.rows)
+		console.log(`Changing playlist for ${this.chat_id} from ${curplaylist} to ${newplaylist}`)
+		for(let r of res.rows){
+			try{
+				let old = await Message.new(this.bot, this.chat_id, r.message_id)
+				old.del()
+			}catch (err){
+				console.log("err deleting message",err.message)
+			}
+		}
+		res = await cache.pool.query("SELECT * FROM messages WHERE chat_id=$1 AND $2 = ANY(playlist) ORDER BY created;",[this.chat_id, newplaylist])
+		console.log("new songs - ",res.rows)
+		for(let r of res.rows){
+			await Message.resend(this.bot, r)
+		}
+		await cache.pool.query("UPDATE users SET cur_playlist=$1 WHERE chat_id=$2",[newplaylist,this.chat_id])
+	}
+		
+
+
 
   async finish(media_id){
     console.log("finish")

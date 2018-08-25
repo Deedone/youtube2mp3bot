@@ -17,6 +17,8 @@ module.exports = class QProcessor{
       th.processBasicKeyboard()
     }else if(th.data[0] == "s"){
 			th.processSongsKeyboard()
+		}else if(th.data[0] == "p"){
+			th.processPlaylistsKeyboard()
 		}
 
     return th
@@ -32,7 +34,17 @@ module.exports = class QProcessor{
     return res.rows[0]
 
   }
-
+	async processPlaylistsKeyboard(){
+		let [_,n] = this.data.split("_")
+		n = parseInt(n)
+		await this.message.updateKeyBoard("basic")
+		if(n==-1) return
+		let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+		let playlist = res.rows[0].playlists[n]
+		this.message.playlist.push(playlist)
+		await this.message.updateDB()
+		console.log("added to playlist",playlist)
+	}
 
   async processBasicKeyboard(){
     if(this.data[2] == "1"){
@@ -50,6 +62,9 @@ module.exports = class QProcessor{
 		}
 		if(this.data[2] == "5"){
 			this.message.del(true)
+		}
+		if(this.data[2] == "4"){
+			await this.message.updateKeyBoard("playlists")
 		}
     
 
