@@ -33,6 +33,45 @@ module.exports = class Processor{
 					this.bot.deleteMessage(this.chat_id, to_delete[this.chat_id]).catch(err=>console.log(err.message))
 					delete to_delete[this.chat_id]
 				}
+			}else if(this.text && this.text.search(/\/\d+/) != -1 && userstate[this.chat_id] == "deleting"){
+				console.log("changing phase two")
+				let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+				let cur = res.rows[0].cur_playlist
+				res = res.rows[0].playlists
+				let i = parseInt(this.text.substring(1))
+				if(i >= res.length || i<=0) return
+				let playlist_to_delete = res[i]
+				res.splice(i,1)
+				await cache.pool.query("UPDATE users SET playlists=$1 WHERE chat_id=$2",[res,this.chat_id])
+				res = await cache.pool.query("SELECT * FROM messages WHERE chat_id=$1",[this.chat_id])
+				for(let r of res.rows){
+					if(r.playlist.indexOf(playlist_to_delete) != -1){
+						r.playlist.splice(r.playlist.indexOf(playlist_to_delete),1)
+						await cache.pool.query("UPDATE messages SET playlist=$1 WHERE id=$2",[r.playlist,r.id])
+					}
+				}
+				if(this.chat_id in to_delete){
+					console.log("deleting old message")
+					this.bot.deleteMessage(this.chat_id, to_delete[this.chat_id]).catch(err=>console.log(err.message))
+					delete to_delete[this.chat_id]
+				}
+				if(playlist_to_delete == cur){
+					this.changePlaylist("main")
+				}
+				
+			}else if(this.text && this.text.search(/\/delete/) != -1){
+				console.log("got /delete")
+				userstate[this.chat_id] = "deleting"
+
+				let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+				let cur = res.rows[0].cur_playlist
+				res = res.rows[0].playlists
+				let str = `You now on ${cur}\n`
+				for(let i=1;i<res.length;i++){
+					str+= `/${i} - ${res[i]}\n`
+				}
+				let mes = await this.bot.sendMessage(this.chat_id,str)
+				to_delete[this.chat_id] = mes.message_id	
 				
 			}else if(this.text && this.text.search(/\/change/) != -1){
 				console.log("got /change")
