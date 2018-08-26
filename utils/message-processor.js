@@ -142,7 +142,7 @@ Send me link yo YouTube video to see magic`)
 		let user =   await cache.pool.query("SELECT * FROM users WHERE chat_id =$1;",[this.chat_id])
 		let curplaylist = user.rows[0].cur_playlist
 		console.log("cur playlist - ",curplaylist)
-		let res = await cache.pool.query("SELECT * FROM messages WHERE chat_id=$1 AND $2 = ANY(playlist);",[this.chat_id, curplaylist])
+		let res = await cache.pool.query("SELECT * FROM messages WHERE chat_id=$1 AND $2 = ANY(playlist) ORDER BY created;",[this.chat_id, curplaylist])
 		console.log("res rows = ",res.rows)
 		console.log(`Fixing playlist for ${this.chat_id}`)
 
