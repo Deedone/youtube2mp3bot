@@ -3,3 +3,4 @@ start.sh
 __pycache__
 *.swp
 *.swo
+*.swn

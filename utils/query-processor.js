@@ -61,7 +61,23 @@ module.exports = class QProcessor{
 			await this.message.updateKeyBoard("songs")
 		}
 		if(this.data[2] == "5"){
-			this.message.del(true)
+			let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+			res = res.rows[0].cur_playlist 
+			let i = this.message.playlist.indexOf(res)
+			if(i != -1){
+				console.log(this.message.playlist, i, res)
+				this.message.playlist.splice(i,1)
+				console.log(this.message.playlist)
+				if(this.message.playlist.length > 0){
+					await this.message.updateDB()
+					this.message.del()
+				}else{
+					this.message.del(true)
+				}
+					
+			}else{
+				this.message.del(true)
+			}
 		}
 		if(this.data[2] == "4"){
 			await this.message.updateKeyBoard("playlists")

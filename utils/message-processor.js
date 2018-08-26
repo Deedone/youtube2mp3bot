@@ -4,7 +4,8 @@ const cache = require("./cache.js")
 const Message = require("./message.js")
 const anim = "-\\|/"
 let current = []
-
+let userstate = {}
+let to_delete = {}
 
 module.exports = class Processor{
 
@@ -19,17 +20,42 @@ module.exports = class Processor{
 			if(this.text && this.text== "/rebuild"){
 				this.fixPlaylist(this.chat_id)
 				return
-			}else if(this.text && this.text.search(/\/change /) != -1){
-				let name = this.text.substring(8)
-				console.log("changing playlist to ",name)
-				await this.changePlaylist(name)
-				console.log("done")
+			}else if(this.text && this.text.search(/\/\d+/) != -1 && this.chat_id in userstate && userstate[this.chat_id] == "changing"){
+				console.log("changing phase two")
+				let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+				res = res.rows[0].playlists
+				let i = parseInt(this.text.substring(1))
+				if(i >= res.length) return
+				delete userstate[this.chat_id]
+				await this.changePlaylist(res[i])
+				if(this.chat_id in to_delete){
+					console.log("deleting old message")
+					this.bot.deleteMessage(this.chat_id, to_delete[this.chat_id]).catch(err=>console.log(err.message))
+					delete to_delete[this.chat_id]
+				}
 				
-			}else if(this.text && this.text.search(/\/create /) != -1){
-				let name = this.text.substring(8)
+			}else if(this.text && this.text.search(/\/change/) != -1){
+				console.log("got /change")
+				userstate[this.chat_id] = "changing"
+				let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+				let cur = res.rows[0].cur_playlist
+				res = res.rows[0].playlists
+				let str = `You now on ${cur}\n`
+				for(let i=0;i<res.length;i++){
+					str+= `/${i} - ${res[i]}\n`
+				}
+				let mes = await this.bot.sendMessage(this.chat_id,str)
+				to_delete[this.chat_id] = mes.message_id	
+			}else if(this.text && this.text.search(/\/create/) != -1){
+				userstate[this.chat_id] = "creating"
+				this.bot.sendMessage(this.chat_id,"Choose a nice name for your playlist")
+
+			}else if(userstate[this.chat_id] == "creating" && this.text){
+				let name = this.text
 				await cache.pool.query("UPDATE users SET playlists=array_append(playlists,$1) WHERE chat_id=$2",[name,this.chat_id])
 				let resp = await Message.new(bot, this.chat_id)
 				resp.update(`New playlist ${name} created`)
+				delete userstate[this.chat_id]
 			}else if(this.text && this.text=="/start"){
 				cache.createuser(this.chat_id).catch(err=>console.log(err.message))
 				let welcome = await Message.new(bot,this.chat_id)
@@ -59,6 +85,8 @@ Send me link yo YouTube video to see magic`)
 
         this.timer = setInterval(()=>this.updateMessage(), 1000)
         this.progress = 0
+				let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
+				this.playlist = res.rows[0].cur_playlist
         current.push(this)
         cache.check(this.video_id).then(cc=>{
           if(cc){
@@ -121,6 +149,7 @@ Send me link yo YouTube video to see magic`)
     this.state = "done"
     clearInterval(this.timer)
 		this.message.title = this.title
+		this.message.playlist = [this.playlist]
     await this.message.transformToMedia(media_id)
     
     current = current.filter(el=>el!==this)
