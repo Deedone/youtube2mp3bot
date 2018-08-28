@@ -7,10 +7,10 @@ Heavily inspired by [@AudioTubeBot](t.me/AudioTubeBot) but free and opensource
 * Stores already uploaded file ids to prevent re-converting of same video
 * Animation for downloading stage
 * Interface for reordering audios
+* Playlists
 
 ### TODO:
 * Web interface for Telegram authentication and automatic session storage in DB
-* Playlists(?)
 * Ability to download entire YouTube playlists
 * Optional use of spare account
 * Optional fallback to SQLite
