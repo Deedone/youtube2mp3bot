@@ -1,4 +1,5 @@
 const express = require("express")
+const cp = require("child_process")
 const TelegramBot = require("node-telegram-bot-api")
 const bodyParser = require("body-parser")
 const fetch = require("node-fetch")
@@ -11,6 +12,9 @@ const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "0"
 const HOOK_URL = process.env.DOMAIN_URL +"/" + TOKEN
 
+console.log("updating ytdl")
+let upd = cp.spawn("node",["./node_modules/youtube-dl/scripts/download.js"],{stdio:"pipe"})
+upd.stdout.on("data", data => console.log(data.toString()))
 
 
 console.log(PORT,TOKEN)
