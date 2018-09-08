@@ -10,7 +10,7 @@
     "node-telegram-bot-api": "^0.30.0",
     "pg": "^7.4.3",
     "sleep": "^5.2.3",
-    "telegram-mtproto": "^2.2.2",
+    "telegram-mtproto": "^2.2.8",
     "youtube-dl": "^1.12.2"
   },
   "devDependencies": {},

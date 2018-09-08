@@ -2,3 +2,4 @@ telethon
 cryptg
 pysocks
 hachoir3
+youtube-dl
