@@ -23,9 +23,14 @@ newname = "./temp/"+sys.argv[3]+".mp3"
 print(os.getcwd(), file=sys.stderr)
 print(os.listdir(os.getcwd()),file=sys.stderr)
 
-os.rename(sys.argv[1], newname)
+try:
+    os.rename(sys.argv[1], newname)
+    client.send_file(botname, newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
+except Exception as e:
+    print("Cannot rename here is ./temp ls",file=sys.stderr)
+    print(os.listdir("./temp/"),file=sys.stderr)
+    client.send_file(botname, sys.argv[1], caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
 
-client.send_file(botname, newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
 
 
 os.remove(newname)
