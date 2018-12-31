@@ -16,7 +16,7 @@ const HOOK_URL = process.env.DOMAIN_URL +"/" + TOKEN
 let lock = false
 console.log("updating ytdl")
 let upd = cp.spawn("node",["./node_modules/youtube-dl/scripts/download.js"],{stdio:"pipe"})
-upd.stdout.on("data", data => {console.log(data.toString());lock=true})
+upd.stdout.on("data", data => {console.log(data.toString());lock=true;console.log("lock = true")})
 
 async function sleep(ms){
 	return new Promise(resolve => setTimeout(resolve,ms));
@@ -26,6 +26,7 @@ async function lockf(){
 		return new Promise(async resolve => {
 			while(lock == false){
 				await sleep(1000);
+				console.log("waiting")
 			}
 			resolve()
 		})
