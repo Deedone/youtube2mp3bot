@@ -13,24 +13,10 @@ const TOKEN = process.env.TOKEN || "0"
 const HOOK_URL = process.env.DOMAIN_URL +"/" + TOKEN
 
 
-let lock = false
 console.log("updating ytdl")
 let upd = cp.spawn("node",["./node_modules/youtube-dl/scripts/download.js"],{stdio:"pipe"})
-upd.stdout.on("data", data => {console.log(data.toString());lock=true;console.log("lock = true")})
+upd.stdout.on("data", data => {console.log(data.toString());setup()})
 
-async function sleep(ms){
-	return new Promise(resolve => setTimeout(resolve,ms));
-}
-
-async function lockf(){
-		return new Promise(async resolve => {
-			while(lock == false){
-				await sleep(1000);
-				console.log("waiting")
-			}
-			resolve()
-		})
-}
 
 console.log(PORT,TOKEN)
 
@@ -41,19 +27,6 @@ app.use(bodyParser.json())
 
 
 
-if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
-	console.log("USING WEBHOOKS ON "+HOOK_URL)
-  bot = new TelegramBot(TOKEN)
-  bot.setWebHook(HOOK_URL,{allowed_updates:["message","callback_query"]})
-}else{
-  console.log("USING LONG POLLING")
-  bot = new TelegramBot(TOKEN,{polling:true})
-  bot.deleteWebHook().then(val => console.log("webhook killed:",val))
-  bot.on("polling_error", (error) => {
-    console.log(error)
-  })
-
-}
 
 
 //Newest API stuff
@@ -68,30 +41,45 @@ bot.editMessageMedia = async function(chat_id,message_id, media_id){
   bot.editMessageReplyMarkup(new KB().getDefault(),{chat_id:chat_id, message_id:message_id})
 }
 
+function setup(){
+	console.log("Setting up handlers")
+	if(!("BOT_FORCE_POLLING" in process.env && process.env.BOT_FORCE_POLLING == 1)){
+		console.log("USING WEBHOOKS ON "+HOOK_URL)
+		bot = new TelegramBot(TOKEN)
+		bot.setWebHook(HOOK_URL,{allowed_updates:["message","callback_query"]})
+	}else{
+		console.log("USING LONG POLLING")
+		bot = new TelegramBot(TOKEN,{polling:true})
+		bot.deleteWebHook().then(val => console.log("webhook killed:",val))
+		bot.on("polling_error", (error) => {
+			console.log(error)
+		})
 
-bot.on("message", async mes =>{
-	await lockf();
-  new MProcessor().do(mes, bot)
-})
+	}
+	bot.on("message", async mes =>{
+		lockf();
+		new MProcessor().do(mes, bot)
+	})
 
-bot.on("callback_query",mes=>{
-  //console.log("query "+JSON.stringify(mes))
-  QProcessor.new(bot,mes)
-  bot.answerCallbackQuery(mes.id)
-})
+	bot.on("callback_query",mes=>{
+		//console.log("query "+JSON.stringify(mes))
+		QProcessor.new(bot,mes)
+		bot.answerCallbackQuery(mes.id)
+	})
 
- 
-app.all("/",(req,res)=>{
-  res.end("nothing to see here")
-})
-.all(`/${TOKEN}`,(req,res)=>{
-  res.end("ok")
-  //console.log(req.body)
-  if("message" in req.body){
-    new MProcessor().do(req.body.message, bot)
-  }else if("callback_query" in req.body){
-    QProcessor.new(bot,req.body.callback_query)
-    bot.answerCallbackQuery(req.body.callback_query.id)
-  }
-})
-.listen(PORT)
+	 
+	app.all("/",(req,res)=>{
+		res.end("nothing to see here")
+	})
+	.all(`/${TOKEN}`,(req,res)=>{
+		res.end("ok")
+		//console.log(req.body)
+		if("message" in req.body){
+			new MProcessor().do(req.body.message, bot)
+		}else if("callback_query" in req.body){
+			QProcessor.new(bot,req.body.callback_query)
+			bot.answerCallbackQuery(req.body.callback_query.id)
+		}
+	})
+	.listen(PORT)
+}
