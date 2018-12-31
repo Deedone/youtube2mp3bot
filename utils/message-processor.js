@@ -2,6 +2,7 @@ const child_process = require("child_process")
 const ytdl = require("./ytdl-wrapper.js")
 const cache = require("./cache.js")
 const Message = require("./message.js")
+const fs = require('fs')
 const anim = "-\\|/"
 let current = []
 let userstate = {}
@@ -200,12 +201,12 @@ Send me link yo YouTube video to see magic`)
       this.message.update(`Downloading video ${anim[this.aindex]}`)
       this.aindex = (this.aindex+1)%anim.length
     }else if(this.state == "uploading"){
-      this.message.update(`Uploading MP3 - ${this.progress}%`)
+      this.message.update(`Uploading MP3 - ${this.progress}%`).catch(err => console.log(err));
     }
   }
 
   async processVideo(){
-		await ytdl.downloadMP3(this.url)
+		await ytdl.downloadMP3(this.url).catch(err => console.log(err))
     console.log("python3",["client.py",this.filename,this.chat_id,this.title,this.video_id])
     let child = child_process.spawn("python3",["./client.py",this.filename,this.chat_id,this.title,this.video_id],{stdio:"pipe"})
     this.state = "uploading"
@@ -213,7 +214,13 @@ Send me link yo YouTube video to see magic`)
       let arr = data.toString().split(" ")
       this.progress = Math.floor(parseInt(arr[0])/parseInt(arr[1])*100)
     })
-    child.stderr.on("data",data => console.log("err",data.toString()))
+    child.stderr.on("data",data => {
+			console.log("err",data.toString())
+
+			fs.readdirSync("./temp/").forEach(file => {
+				console.log(file);
+			})
+		})
 
   }
 
