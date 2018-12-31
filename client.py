@@ -20,6 +20,8 @@ if len(sys.argv) < 5:
     exit()
 
 newname = "./temp/"+sys.argv[3]+".mp3"
+print(os.getcwd(), file=sys.stderr)
+print(os.listdir(os.getcwd()),file=sys.stderr)
 
 os.rename(sys.argv[1], newname)
 
