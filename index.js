@@ -12,10 +12,24 @@ const PORT = process.env.PORT || 5000
 const TOKEN = process.env.TOKEN || "0"
 const HOOK_URL = process.env.DOMAIN_URL +"/" + TOKEN
 
+
+let lock = false
 console.log("updating ytdl")
 let upd = cp.spawn("node",["./node_modules/youtube-dl/scripts/download.js"],{stdio:"pipe"})
-upd.stdout.on("data", data => console.log(data.toString()))
+upd.stdout.on("data", data => {console.log(data.toString());lock=true})
 
+async function sleep(ms){
+	return new Promise(resolve => setTimeout(resolve,ms));
+}
+
+async function lockf(){
+		return new Promise(async resolve => {
+			while(lock == false){
+				await sleep(1000);
+			}
+			resolve()
+		})
+}
 
 console.log(PORT,TOKEN)
 
@@ -54,7 +68,8 @@ bot.editMessageMedia = async function(chat_id,message_id, media_id){
 }
 
 
-bot.on("message", mes =>{
+bot.on("message", async mes =>{
+	await lockf();
   new MProcessor().do(mes, bot)
 })
 
