@@ -27,6 +27,7 @@ if len(sys.argv) < 5:
     exit()
 
 newname = "./temp/"+sys.argv[3]+".mp3"
+os.rename(sys.argv[1], newname)
 print(os.getcwd(), file=sys.stderr)
 print(os.listdir(os.getcwd()),file=sys.stderr)
 
@@ -34,16 +35,15 @@ print(os.listdir(os.getcwd()),file=sys.stderr)
 mp3file = eyed3.load(newname)
 url = "https://www.youtube.com/watch?v=" + sys.argv[4]
 video = pafy.new(url)
-thumbnail = ulrlib.request.urlretrieve(video.bigthumbhd, "./temp/image"+sys.argv[4]+".jpg")
+thumbnail = urllib.request.urlretrieve(video.bigthumbhd, "./temp/image"+sys.argv[4]+".jpg")
 title = video.title.split(' - ')
 mp3file.tag.artist = title[0]
 mp3file.tag.song = title[1]
-mp3file.tag.images.set(3, open('zhopa.jpg', 'r+b').read(), 'image/jpeg')
+mp3file.tag.images.set(3, open("./temp/image"+sys.argv[4]+".jpg", 'r+b').read(), 'image/jpeg')
 mp3file.tag.save()
 
 
 try:
-    os.rename(sys.argv[1], newname)
     client.send_file(botname, newname, caption=sys.argv[2] + ' ' + sys.argv[4], progress_callback=lambda a, b: [print(a, b), sys.stdout.flush()], allow_cache=False, attributes=[types.DocumentAttributeFilename(sys.argv[3])])
 except Exception as e:
     print("Cannot rename here is ./temp ls",file=sys.stderr)
@@ -53,4 +53,4 @@ except Exception as e:
 
 
 os.remove(newname)
-os.remove(thumbnail)
+os.remove("./temp/image"+sys.argv[4]+".jpg")

@@ -57,7 +57,6 @@ function setup(){
 
 	}
 	bot.on("message", async mes =>{
-		lockf();
 		new MProcessor().do(mes, bot)
 	})
 

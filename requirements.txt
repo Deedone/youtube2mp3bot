@@ -5,5 +5,3 @@ hachoir3
 youtube-dl
 eyed3
 pafy
-magic
-urllib.request

@@ -125,6 +125,7 @@ Send me link yo YouTube video to see magic`)
 
         this.timer = setInterval(()=>this.updateMessage(), 1000)
         this.progress = 0
+				console.log("Checking cache");
 				let res = await cache.pool.query("SELECT * FROM users WHERE chat_id=$1",[this.chat_id])
 				this.playlist = res.rows[0].cur_playlist
         current.push(this)
@@ -206,7 +207,8 @@ Send me link yo YouTube video to see magic`)
   }
 
   async processVideo(){
-		await ytdl.downloadMP3(this.url).catch(err => console.log(err))
+		console.log("Loading");
+		await ytdl.downloadMP3(this.url).catch(err => console.log("Sraka " + err))
     console.log("python3",["client.py",this.filename,this.chat_id,this.title,this.video_id])
     let child = child_process.spawn("python3",["./client.py",this.filename,this.chat_id,this.title,this.video_id],{stdio:"pipe"})
     this.state = "uploading"
@@ -225,6 +227,7 @@ Send me link yo YouTube video to see magic`)
   }
 
   async parseYoutube(){
+		console.log("parse youtube");
 
     if(!this.text) return false
     let matches = this.text.match(/(?:https:\/\/)?(?:www\.?)?(?:youtube\.com\/watch\?v=|youtu\.be\/)(.+?)(?:&| |$|\?)/)
